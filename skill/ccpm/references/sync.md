@@ -1,125 +1,174 @@
-# Sync — Push to GitHub & Track Progress
+# Sync — Push to Lark Base & Track Progress
 
-This phase covers pushing local epics/tasks to GitHub as issues, syncing progress as comments, and closing issues when work is done.
+This phase covers pushing local epics/tasks to Feishu Base (飞书多维表格) as records, syncing progress, and closing tasks when work is done. Code operations use GitLab via `glab`.
+
+---
+
+## Load Project Config
+
+**Always load config before any sync operation:**
+
+```bash
+APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
+GITLAB_DEFAULT_BRANCH=$(grep 'default_branch:' .claude/lark-ccpm.yml | awk '{print $2}')
+
+if [ -z "$APP_TOKEN" ] || [ -z "$TABLE_ID" ]; then
+  echo "❌ Missing Lark config. Run init first to create .claude/lark-ccpm.yml"
+  exit 1
+fi
+```
 
 ---
 
 ## Repository Safety Check
 
-**Always run this before any GitHub write operation:**
+**Always run this before any write operation:**
 
 ```bash
 remote_url=$(git remote get-url origin 2>/dev/null || echo "")
-if [[ "$remote_url" == *"automazeio/ccpm"* ]]; then
-  echo "❌ Cannot sync to the CCPM template repository."
-  echo "Update remote: git remote set-url origin https://github.com/YOUR/REPO.git"
+if [[ "$remote_url" == *"lark-ccpm"* ]] && [[ "$remote_url" == *"xpzouying"* ]]; then
+  echo "❌ Cannot sync from the lark-ccpm template repository."
+  echo "Update remote: git remote set-url origin git@dev.msh.team:YOUR_GROUP/YOUR_PROJECT.git"
   exit 1
 fi
-REPO=$(echo "$remote_url" | sed 's|.*github.com[:/]||' | sed 's|\.git$||')
 ```
 
 ---
 
-## Epic Sync — Push Epic + Tasks to GitHub
+## Epic Sync — Push Epic + Tasks to Lark Base
 
-**Trigger**: User wants to push a local epic and its tasks to GitHub as issues.
+**Trigger**: User wants to push a local epic and its tasks to Feishu Base as records.
 
 ### Preflight
 - Verify `.claude/epics/<name>/epic.md` exists.
 - Verify numbered task files exist — if none: "❌ No tasks to sync. Decompose the epic first."
+- Load config: `APP_TOKEN`, `TABLE_ID` from `.claude/lark-ccpm.yml`.
 
 ### Process
 
-**Step 1 — Create epic issue:**
+**Step 1 — Create epic record in Lark Base:**
 
-Strip frontmatter from epic.md, then:
+Strip frontmatter from epic.md to get the description body:
 ```bash
-sed '1,/^---$/d; 1,/^---$/d' .claude/epics/<name>/epic.md > /tmp/epic-body.md
-epic_number=$(gh issue create \
-  --repo "$REPO" \
-  --title "Epic: <name>" \
-  --body-file /tmp/epic-body.md \
-  --label "epic,epic:<name>,feature" \
-  --json number -q .number)
+description=$(sed '1,/^---$/d; 1,/^---$/d' .claude/epics/<name>/epic.md)
 ```
 
-**Step 2 — Create task sub-issues:**
-
-Check if `gh-sub-issue` extension is available:
+Create the record:
 ```bash
-if gh extension list | grep -q "yahsan2/gh-sub-issue"; then
-  use_subissues=true
-fi
+epic_result=$(lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --json "{\"标题\":\"Epic: <name>\",\"类型\":\"Epic\",\"状态\":\"Open\",\"描述\":$(echo "$description" | jq -Rs .),\"本地文件\":\".claude/epics/<name>/epic.md\",\"标签\":[\"epic\",\"epic:<name>\"],\"可并行\":false,\"进度\":0}")
+epic_record_id=$(echo "$epic_result" | jq -r '.data.record.record_id_list[0]')
 ```
+
+If `epic_record_id` is empty, print the error and exit.
+
+**Step 2 — Update epic frontmatter with record ID:**
+```bash
+current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+sed -i.bak "/^lark_record:/c\\lark_record: $epic_record_id" .claude/epics/<name>/epic.md
+sed -i.bak "/^lark_app:/c\\lark_app: $APP_TOKEN" .claude/epics/<name>/epic.md
+sed -i.bak "/^lark_table:/c\\lark_table: $TABLE_ID" .claude/epics/<name>/epic.md
+sed -i.bak "/^updated:/c\\updated: $current_date" .claude/epics/<name>/epic.md
+rm .claude/epics/<name>/epic.md.bak
+```
+
+**Step 3 — Create task records:**
 
 For <5 tasks: create sequentially.
 For ≥5 tasks: use parallel Task agents (3-4 tasks per batch).
 
-Per task:
+Per task file (e.g., `001.md`):
 ```bash
-sed '1,/^---$/d; 1,/^---$/d' <task_file> > /tmp/task-body.md
-task_number=$(gh issue create \
-  --repo "$REPO" \
-  --title "<task_name>" \
-  --body-file /tmp/task-body.md \
-  --label "task,epic:<name>" \
-  --json number -q .number)
-# or with sub-issues:
-# gh sub-issue create --parent $epic_number ...
+task_name=$(grep '^name:' .claude/epics/<name>/001.md | sed 's/^name: *//')
+task_desc=$(sed '1,/^---$/d; 1,/^---$/d' .claude/epics/<name>/001.md)
+task_parallel=$(grep '^parallel:' .claude/epics/<name>/001.md | awk '{print $2}')
+
+task_result=$(lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --json "{\"标题\":\"$task_name\",\"类型\":\"Task\",\"状态\":\"Open\",\"描述\":$(echo "$task_desc" | jq -Rs .),\"本地文件\":\".claude/epics/<name>/001.md\",\"标签\":[\"task\",\"epic:<name>\"],\"所属 Epic\":[{\"id\":\"$epic_record_id\"}],\"可并行\":$task_parallel,\"进度\":0}")
+task_record_id=$(echo "$task_result" | jq -r '.data.record.record_id_list[0]')
 ```
 
-**Step 3 — Rename task files and update references:**
+**Step 4 — Update task frontmatter (do NOT rename files):**
 
-After all issues are created, rename `001.md` → `<issue_number>.md` and update all `depends_on`/`conflicts_with` arrays to use real issue numbers (not sequential numbers).
-
+Task files keep their sequential names (`001.md`, `002.md`). Record ID goes into frontmatter:
 ```bash
-# Build old→new mapping, then for each task file:
-sed -i.bak "s/\b001\b/<new_num_1>/g" <file>  # repeat for each mapping
-mv 001.md <new_num>.md
+sed -i.bak "/^lark_record:/c\\lark_record: $task_record_id" .claude/epics/<name>/001.md
+sed -i.bak "/^updated:/c\\updated: $current_date" .claude/epics/<name>/001.md
+rm .claude/epics/<name>/001.md.bak
 ```
 
-**Step 4 — Update frontmatter:**
+**Step 5 — Sync dependency and conflict links to Lark Base:**
+
+After all tasks have record IDs, update both local frontmatter AND Lark Base records:
 ```bash
-current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-# Update github: and updated: fields in epic.md and each task file
-github_url="https://github.com/$REPO/issues/<number>"
-sed -i.bak "/^github:/c\\github: $github_url" <file>
-sed -i.bak "/^updated:/c\\updated: $current_date" <file>
-rm <file>.bak
+# Build mapping: sequential_number → record_id
+declare -A id_map
+for f in .claude/epics/<name>/[0-9]*.md; do
+  num=$(basename "$f" .md)
+  rid=$(grep 'lark_record:' "$f" | awk '{print $2}')
+  id_map[$num]=$rid
+done
+
+# For each task, build link arrays and update Lark Base
+for f in .claude/epics/<name>/[0-9]*.md; do
+  rid=$(grep 'lark_record:' "$f" | awk '{print $2}')
+
+  # Build depends_on link array
+  deps_json="[]"
+  deps=$(grep 'depends_on:' "$f" | sed 's/depends_on: *\[//;s/\]//')
+  if [ -n "$deps" ]; then
+    deps_json=$(echo "$deps" | tr ',' '\n' | while read d; do
+      d=$(echo "$d" | xargs)
+      echo "{\"id\":\"${id_map[$d]}\"}"
+    done | jq -s '.')
+  fi
+
+  # Build conflicts_with link array
+  conflicts_json="[]"
+  conflicts=$(grep 'conflicts_with:' "$f" | sed 's/conflicts_with: *\[//;s/\]//')
+  if [ -n "$conflicts" ]; then
+    conflicts_json=$(echo "$conflicts" | tr ',' '\n' | while read c; do
+      c=$(echo "$c" | xargs)
+      echo "{\"id\":\"${id_map[$c]}\"}"
+    done | jq -s '.')
+  fi
+
+  # Update Lark Base record with dependency links
+  lark-cli base +record-upsert --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+    --record-id "$rid" \
+    --json "{\"依赖任务\":$deps_json,\"冲突任务\":$conflicts_json}"
+done
 ```
 
-**Step 5 — Create worktree for the epic:**
+**Step 6 — Create worktree for the epic:**
 ```bash
 git checkout main && git pull origin main
 git worktree add ../epic-<name> -b epic/<name>
 ```
 
-**Step 6 — Create github-mapping.md:**
-```markdown
-# GitHub Issue Mapping
-Epic: #<N> - https://github.com/<repo>/issues/<N>
-Tasks:
-- #<N>: <title> - https://github.com/<repo>/issues/<N>
-Synced: <datetime>
-```
-
 **Output:**
 ```
-✅ Synced epic <name> to GitHub
-  Epic: #<N>
-  Tasks: N sub-issues
+✅ Synced epic <name> to Lark Base
+  Epic record: <epic_record_id>
+  Tasks: N records created
   Worktree: ../epic-<name>
-  Next: "start working on issue <N>" or "start the <name> epic"
+  Next: "start working on task 001" or "start the <name> epic"
 ```
 
 ---
 
-## Issue Sync — Post Progress to GitHub
+## Progress Sync — Update Task Status in Lark Base
 
-**Trigger**: User wants to sync local development progress to a GitHub issue as a comment.
+**Trigger**: User wants to sync local development progress to a Lark Base record.
 
 ### Preflight
-- Verify issue exists: `gh issue view <N> --json state`
+- Verify task file exists and has `lark_record:` in frontmatter.
+- Get record ID: `RECORD_ID=$(grep 'lark_record:' <task_file> | awk '{print $2}')`
+- If no record ID: "❌ Task not synced. Run epic sync first."
 - Check `.claude/epics/*/updates/<N>/` exists with a `progress.md` file.
 - Check `last_sync` in progress.md — if synced <5 minutes ago, confirm before proceeding.
 
@@ -127,14 +176,15 @@ Synced: <datetime>
 
 Gather updates from `.claude/epics/<epic>/updates/<N>/` (progress.md, notes.md, commits.md).
 
-Format and post a comment:
+Format as a progress update and append to the record's description field:
 ```bash
-gh issue comment <N> --body-file /tmp/update-comment.md
-```
+existing=$(lark-cli base +record-get \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --record-id "$RECORD_ID" | jq -r '.data.record.描述 // ""')
 
-Comment format:
-```markdown
-## 🔄 Progress Update - <date>
+progress_text="
+---
+## 🔄 Progress Update — $(date -u +%Y-%m-%d)
 
 ### ✅ Completed Work
 ### 🔄 In Progress
@@ -143,39 +193,61 @@ Comment format:
 ### 🚀 Next Steps
 ### ⚠️ Blockers
 
----
-*Progress: N% | Synced at <timestamp>*
+*Progress: N% | Synced at $(date -u +"%Y-%m-%dT%H:%M:%SZ")*
+"
+
+# Append progress to description
+new_desc="${existing}${progress_text}"
+lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --record-id "$RECORD_ID" \
+  --json "{\"描述\":$(echo "$new_desc" | jq -Rs .),\"进度\":$completion_pct}"
+```
+
+Optionally, send a notification to the project chat:
+```bash
+CHAT_ID=$(grep 'chat_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+if [ -n "$CHAT_ID" ]; then
+  lark-cli im +send --chat-id "$CHAT_ID" \
+    --text "📊 Task update: <task_name> — ${completion_pct}% complete"
+fi
 ```
 
 After posting: update `last_sync` in progress.md frontmatter, update `updated` in the task file.
 
-Add sync marker to local files to prevent duplicate comments:
-```markdown
-<!-- SYNCED: <datetime> -->
-```
-
 ---
 
-## Closing an Issue
+## Closing a Task
 
 **Trigger**: User marks a task complete.
 
 ### Process
 
 1. Find the local task file (`.claude/epics/*/<N>.md`).
-2. Update frontmatter: `status: closed`, `updated: <now>`.
-3. Post completion comment:
+2. Get record ID: `RECORD_ID=$(grep 'lark_record:' <task_file> | awk '{print $2}')`
+3. Update frontmatter: `status: closed`, `updated: <now>`.
+4. Update Lark Base record:
 ```bash
-echo "✅ Task completed — all acceptance criteria met." | gh issue comment <N> --body-file -
-gh issue close <N>
+lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --record-id "$RECORD_ID" \
+  --json '{"状态":"Closed","进度":100}'
 ```
-4. Check off the task in the epic issue body:
+5. Recalculate and update epic progress:
 ```bash
-gh issue view <epic_N> --json body -q .body > /tmp/epic-body.md
-sed -i "s/- \[ \] #<N>/- [x] #<N>/" /tmp/epic-body.md
-gh issue edit <epic_N> --body-file /tmp/epic-body.md
+total=$(ls .claude/epics/<name>/[0-9]*.md 2>/dev/null | wc -l)
+closed=$(grep -l '^status: closed' .claude/epics/<name>/[0-9]*.md 2>/dev/null | wc -l)
+progress=$((closed * 100 / total))
+
+epic_record=$(grep 'lark_record:' .claude/epics/<name>/epic.md | awk '{print $2}')
+lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --record-id "$epic_record" \
+  --json "{\"进度\":$progress}"
+
+sed -i.bak "/^progress:/c\\progress: ${progress}%" .claude/epics/<name>/epic.md
+rm .claude/epics/<name>/epic.md.bak
 ```
-5. Recalculate and update epic progress: `progress = closed_tasks / total_tasks * 100`
 
 ---
 
@@ -186,7 +258,7 @@ gh issue edit <epic_N> --body-file /tmp/epic-body.md
 ### Preflight
 - Verify worktree `../epic-<name>` exists.
 - Check for uncommitted changes in the worktree — block if dirty.
-- Warn if any task issues are still open.
+- Warn if any task records are still Open/In Progress.
 
 ### Process
 
@@ -195,52 +267,73 @@ gh issue edit <epic_N> --body-file /tmp/epic-body.md
 cd ../epic-<name>
 # detect and run: npm test / pytest / cargo test / go test / etc.
 
+# Create MR on GitLab
+glab mr create \
+  --source-branch "epic/<name>" \
+  --target-branch "$GITLAB_DEFAULT_BRANCH" \
+  --title "Epic: <name>" \
+  --description "Merges epic <name>. Lark Base epic record: $epic_record_id"
+
+# After MR review and merge:
+glab mr merge <MR_N>
+
 # From main repo:
 git checkout main && git pull origin main
-git merge epic/<name> --no-ff -m "Merge epic: <name>"
-git push origin main
 
-# Cleanup
+# Cleanup worktree
 git worktree remove ../epic-<name>
 git branch -d epic/<name>
-git push origin --delete epic/<name>
 
 # Archive
 mkdir -p .claude/epics/archived/
 mv .claude/epics/<name> .claude/epics/archived/
 
-# Close GitHub issues
-epic_issue=$(grep 'github:' .claude/epics/archived/<name>/epic.md | grep -oE '[0-9]+$')
-gh issue close $epic_issue -c "Epic completed and merged to main"
+# Update Lark Base: close epic record
+epic_record=$(grep 'lark_record:' .claude/epics/archived/<name>/epic.md | awk '{print $2}')
+lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --record-id "$epic_record" \
+  --json '{"状态":"Closed","进度":100}'
 ```
 
 Update epic.md frontmatter: `status: completed`.
 
+Write MR URL back to epic frontmatter:
+```bash
+sed -i.bak "/^gitlab_mr:/c\\gitlab_mr: <MR_URL>" .claude/epics/archived/<name>/epic.md
+rm .claude/epics/archived/<name>/epic.md.bak
+```
+
 ---
 
-## Reporting a Bug Against a Completed Issue
+## Reporting a Bug Against a Completed Task
 
-**Trigger**: User finds a bug while testing a completed or in-progress issue — e.g. "found a bug in issue 42", "email validation is broken, came up while testing issue 42".
-
-The workflow should stay automated: create a linked bug task without losing context from the original issue.
+**Trigger**: User finds a bug while testing a completed or in-progress task — e.g. "found a bug in task 003", "email validation is broken, came up while testing task 003".
 
 ### Process
 
-**Step 1 — Read the original issue for context:**
+**Step 1 — Read the original task for context:**
 ```bash
-gh issue view <original_N> --json title,body,labels
+# Read local task file
+cat .claude/epics/*/<original_N>.md
+
+# Read from Lark Base if record exists
+RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<original_N>.md | awk '{print $2}')
+if [ -n "$RECORD_ID" ]; then
+  lark-cli base +record-get --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID"
+fi
 ```
-Also read the local task file if it exists: `.claude/epics/*/<original_N>.md`
 
 **Step 2 — Create a local bug task file:**
 
 ```markdown
 ---
-name: Bug: <short description>
+name: "Bug: <short description>"
 status: open
 created: <run: date -u +"%Y-%m-%dT%H:%M:%SZ">
 updated: <same>
-github: (will be set on sync)
+lark_record:
+gitlab_mr:
 depends_on: []
 parallel: false
 conflicts_with: []
@@ -250,7 +343,7 @@ bug_for: <original_N>
 # Bug: <short description>
 
 ## Context
-Found while working on / testing issue #<original_N>: <original title>
+Found while working on / testing task <original_N>: <original title>
 
 ## Description
 <what's broken>
@@ -259,12 +352,12 @@ Found while working on / testing issue #<original_N>: <original title>
 <steps>
 
 ## Expected vs Actual
-- Expected: 
-- Actual: 
+- Expected:
+- Actual:
 
 ## Acceptance Criteria
 - [ ] Bug is fixed
-- [ ] Original issue #<original_N> behaviour is unaffected
+- [ ] Original task <original_N> behaviour is unaffected
 
 ## Effort Estimate
 - Size: XS/S
@@ -272,25 +365,27 @@ Found while working on / testing issue #<original_N>: <original title>
 
 Save to `.claude/epics/<same_epic_as_original>/bug-<original_N>-<slug>.md`
 
-**Step 3 — Create a linked GitHub issue:**
+**Step 3 — Create a bug record in Lark Base:**
 ```bash
-gh issue create \
-  --repo "$REPO" \
-  --title "Bug: <short description>" \
-  --body "$(cat /tmp/bug-body.md)" \
-  --label "bug,epic:<epic_name>" \
-  --json number -q .number
+bug_desc=$(sed '1,/^---$/d; 1,/^---$/d' <bug_file>)
+bug_result=$(lark-cli base +record-upsert \
+  --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --json "{\"标题\":\"Bug: <short description>\",\"类型\":\"Bug\",\"状态\":\"Open\",\"描述\":$(echo "$bug_desc" | jq -Rs .),\"标签\":[\"bug\",\"epic:<epic_name>\"],\"本地文件\":\".claude/epics/<epic>/bug-<original_N>-<slug>.md\",\"可并行\":false,\"进度\":0}")
+bug_record_id=$(echo "$bug_result" | jq -r '.data.record.record_id_list[0]')
 ```
 
-The issue body should open with `Fixes / follow-up to #<original_N>` so GitHub auto-links them.
-
-**Step 4 — Update the local file** with the GitHub issue number and rename to `<new_N>.md`.
+**Step 4 — Update the local file** with the Lark record ID:
+```bash
+sed -i.bak "/^lark_record:/c\\lark_record: $bug_record_id" <bug_file>
+rm <bug_file>.bak
+```
 
 **Output:**
 ```
-✅ Bug issue created: #<new_N> — "Bug: <short description>"
-  Linked to: #<original_N>
+✅ Bug record created in Lark Base: <bug_record_id>
+  Title: "Bug: <short description>"
+  Linked to: task <original_N>
   Epic: <epic_name>
 
-Start fixing it: "start working on issue <new_N>"
+Start fixing it: "start working on bug-<original_N>-<slug>"
 ```
