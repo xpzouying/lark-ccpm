@@ -1,19 +1,19 @@
 ---
 name: ccpm
-description: "CCPM - spec-driven project management: PRD → Epic → GitHub Issues → parallel agents → shipped code. Use this skill for anything in the software delivery lifecycle: writing a PRD ('write a PRD for X', 'let's plan X', 'scope this out'), parsing a PRD into an epic, decomposing an epic into tasks, syncing to GitHub ('sync the X epic', 'push tasks to github'), starting work on an issue ('start working on issue N', 'let's work on issue N'), analyzing parallel work streams, running standups ('standup', 'run the standup'), checking status ('what's next', 'what's blocked', 'what are we working on'), closing issues, or merging an epic. Use ccpm any time the user is talking about shipping a feature, managing work, or tracking progress — even if they don't say 'ccpm' or 'PRD'. Do NOT use for: debugging code, writing tests, reviewing PRs, or raw GitHub issue/PR operations with no delivery context."
+description: "CCPM - spec-driven project management: PRD → Epic → Lark Base records → parallel agents → shipped code. Use this skill for anything in the software delivery lifecycle: writing a PRD ('write a PRD for X', 'let's plan X', 'scope this out'), parsing a PRD into an epic, decomposing an epic into tasks, syncing to Lark Base ('sync the X epic', 'push tasks to Lark Base'), starting work on an issue ('start working on issue N', 'let's work on issue N'), analyzing parallel work streams, running standups ('standup', 'run the standup'), checking status ('what's next', 'what's blocked', 'what are we working on'), closing tasks, or merging an epic. Use ccpm any time the user is talking about shipping a feature, managing work, or tracking progress — even if they don't say 'ccpm' or 'PRD'. Do NOT use for: debugging code, writing tests, reviewing PRs, or raw issue/PR operations with no delivery context."
 ---
 
 # CCPM - Claude Code Project Manager
 
-A spec-driven development workflow: PRD → Epic → GitHub Issues → Parallel Agents → Shipped Code.
+A spec-driven development workflow: PRD → Epic → Lark Base Records → Parallel Agents → Shipped Code.
 
 ## Core Philosophy
 
-Requirements live in files, not heads. Every feature starts as a PRD, becomes a technical epic, decomposes into GitHub issues, and gets executed by parallel agents with full traceability.
+Requirements live in files, not heads. Every feature starts as a PRD, becomes a technical epic, decomposes into Lark Base task records, and gets executed by parallel agents with full traceability.
 
 ## File Conventions
 
-Before doing anything, read `references/conventions.md` for path standards, frontmatter schemas, and GitHub operation rules. These apply to all phases.
+Before doing anything, read `references/conventions.md` for path standards, frontmatter schemas, and operation rules. These apply to all phases.
 
 ## The Five Phases
 
@@ -27,15 +27,15 @@ Before doing anything, read `references/conventions.md` for path standards, fron
 **Read**: `references/structure.md`
 **Covers**: Epic decomposition into numbered task files with dependencies and parallelization.
 
-### 3. Sync — Push to GitHub
-**When**: Local epic/tasks need to become GitHub issues, progress needs to be posted as comments, or a bug is found and needs a linked issue created.
+### 3. Sync — Push to Lark Base
+**When**: Local epic/tasks need to become Lark Base records, progress needs to be posted as comments, or a bug is found and needs a linked issue created.
 **Read**: `references/sync.md`
-**Covers**: Epic sync (epic + tasks → GitHub issues), issue sync (progress comments), closing issues/epics, bug reporting against completed issues.
+**Covers**: Epic sync (epic + tasks → Lark Base records), progress sync, closing tasks/epics, bug reporting against completed tasks.
 
 ### 4. Execute — Start building
-**When**: User wants to start working on one or more GitHub issues with parallel agents.
+**When**: User wants to start working on one or more tasks with parallel agents.
 **Read**: `references/execute.md`
-**Covers**: Issue analysis (parallel work stream identification), launching parallel agents, coordinating worktrees.
+**Covers**: Task analysis (parallel work stream identification), launching parallel agents, coordinating worktrees.
 
 ### 5. Track — Know where things stand
 **When**: User asks for status, standup report, what's blocked, what's next, or needs to validate state.
@@ -73,10 +73,10 @@ Use the LLM for work that requires reasoning: writing PRDs, analyzing parallelis
 Plan a feature:     "I want to build X" or "create a PRD for X"
 Parse to epic:      "turn the X PRD into an epic"
 Decompose:          "break down the X epic into tasks"
-Sync to GitHub:     "push the X epic to GitHub"
-Start an issue:     "start working on issue 42"
+Sync to Lark Base:  "push the X epic to Lark Base"
+Start a task:       "start working on task 001"
 Check status:       "what's our status" / "standup"
 What's next:        "what should I work on next"
 Merge epic:         "merge the X epic"
-Report a bug:       "found a bug in issue 42" / "testing issue 42 revealed X"
+Report a bug:       "found a bug in task 003" / "testing task 003 revealed X"
 ```

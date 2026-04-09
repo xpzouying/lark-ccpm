@@ -74,7 +74,10 @@ status: backlog
 created: <run: date -u +"%Y-%m-%dT%H:%M:%SZ">
 progress: 0%
 prd: .claude/prds/<name>.md
-github: (will be set on sync)
+lark_record: (will be set on sync)
+lark_app: (will be set on sync)
+lark_table: (will be set on sync)
+gitlab_mr: (will be set after MR creation)
 ---
 
 # Epic: <feature-name>
