@@ -102,7 +102,7 @@ sed -i.bak "/^<field>:/c\\<field>: <value>" <file>
 rm <file>.bak
 ```
 
-When stripping frontmatter to get body content for GitHub:
+When stripping frontmatter to get body content:
 ```bash
 sed '1,/^---$/d; 1,/^---$/d' <file> > /tmp/body.md
 ```
