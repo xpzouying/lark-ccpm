@@ -1,20 +1,26 @@
 # Execute — Start Building with Parallel Agents
 
-This phase covers analyzing GitHub issues for parallel work streams and launching agents to execute them.
+This phase covers analyzing tasks for parallel work streams and launching agents to execute them.
 
 ---
 
-## Issue Analysis
+## Task Analysis
 
-**Trigger**: User wants to understand how to parallelize work on an issue before starting.
+**Trigger**: User wants to understand how to parallelize work on a task before starting.
 
 ### Preflight
-- Find the local task file: check `.claude/epics/*/<N>.md` first, then search for `github:.*issues/<N>` in frontmatter.
-- If not found: "❌ No local task for issue #<N>. Run a sync first."
+- Find the local task file: check `.claude/epics/*/<N>.md` first, then search for `lark_record:` in frontmatter.
+- If not found: "❌ No local task for task #<N>. Run a sync first."
 
 ### Process
 
-Get issue details: `gh issue view <N> --json title,body,labels`
+Get task details:
+```bash
+APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<N>.md | awk '{print $2}')
+lark-cli base +record-get --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID"
+```
 
 Read the local task file fully. Identify independent work streams by asking:
 - Which files will be created/modified?
@@ -32,14 +38,15 @@ Create `.claude/epics/<epic_name>/<N>-analysis.md`:
 
 ```markdown
 ---
-issue: <N>
+task: <N>
+lark_record: <record_id>
 title: <title>
 analyzed: <run: date -u +"%Y-%m-%dT%H:%M:%SZ">
 estimated_hours: <total>
 parallelization_factor: <1.0-5.0>
 ---
 
-# Parallel Work Analysis: Issue #<N>
+# Parallel Work Analysis: Task <N>
 
 ## Overview
 
@@ -72,16 +79,22 @@ parallelization_factor: <1.0-5.0>
 - Efficiency gain: <pct>%
 ```
 
-**Output**: "✅ Analysis complete for issue #<N> — N parallel streams identified. Ready to start? Say: start issue <N>"
+**Output**: "✅ Analysis complete for task #<N> — N parallel streams identified. Ready to start? Say: start task <N>"
 
 ---
 
-## Starting an Issue
+## Starting a Task
 
-**Trigger**: User wants to begin work on a specific GitHub issue.
+**Trigger**: User wants to begin work on a specific task.
 
 ### Preflight
-1. Verify issue exists and is open: `gh issue view <N> --json state,title,labels,body`
+1. Verify task exists and is open by reading frontmatter `lark_record:` from the local task file, then:
+   ```bash
+   APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+   TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+   RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<N>.md | awk '{print $2}')
+   lark-cli base +record-get --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID"
+   ```
 2. Find local task file (as above).
 3. Check for analysis file: `.claude/epics/*/<N>-analysis.md` — if missing, run analysis first (or do both in sequence: analyze then start).
 4. Verify epic worktree exists: `git worktree list | grep "epic-<name>"` — if not: "❌ No worktree. Sync the epic first."
@@ -99,7 +112,8 @@ current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 Create `.claude/epics/<epic>/updates/<N>/stream-<X>.md` for each stream:
 ```markdown
 ---
-issue: <N>
+task: <N>
+lark_record: <record_id>
 stream: <stream_name>
 started: <datetime>
 status: in_progress
@@ -113,10 +127,10 @@ status: in_progress
 
 ```yaml
 Task:
-  description: "Issue #<N> Stream <X>"
+  description: "Task #<N> Stream <X>"
   subagent_type: "general-purpose"
   prompt: |
-    You are working on Issue #<N> in the epic worktree at: ../epic-<name>/
+    You are working on Task #<N> in the epic worktree at: ../epic-<name>/
     
     Your stream: <stream_name>
     Your scope — files to modify: <file_patterns>
@@ -126,7 +140,7 @@ Task:
     1. Read full task from: .claude/epics/<epic>/<N>.md
     2. Read analysis from: .claude/epics/<epic>/<N>-analysis.md
     3. Work ONLY in your assigned files
-    4. Commit frequently: "Issue #<N>: <specific change>"
+    4. Commit frequently: "Task #<N>: <specific change>"
     5. Update progress in: .claude/epics/<epic>/updates/<N>/stream-<X>.md
     6. If you need to touch files outside your scope, note it in your progress file and wait
     7. Never use --force on git operations
@@ -136,9 +150,12 @@ Task:
 
 Streams with unmet dependencies are queued — launch them as their dependencies complete.
 
-**Step 4 — Assign on GitHub:**
+**Step 4 — Update status in Lark Base:**
 ```bash
-gh issue edit <N> --add-assignee @me --add-label "in-progress"
+APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<N>.md | awk '{print $2}')
+lark-cli base +record-upsert --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID" --json '{"状态":"In Progress"}'
 ```
 
 **Step 5 — Create execution status file** at `.claude/epics/<epic>/updates/<N>/execution.md`:
@@ -156,7 +173,7 @@ gh issue edit <N> --add-assignee @me --add-label "in-progress"
 
 **Output:**
 ```
-✅ Started work on issue #<N>
+✅ Started work on task #<N>
 
 Launched N agents:
   Stream A: <name> ✓ Started
@@ -164,17 +181,17 @@ Launched N agents:
   Stream C: <name> ⏸ Waiting (depends on A)
 
 Monitor: check progress in .claude/epics/<epic>/updates/<N>/
-Sync updates: "sync issue <N>"
+Sync updates: "sync task <N>"
 ```
 
 ---
 
 ## Starting a Full Epic
 
-**Trigger**: User wants to launch parallel agents across all ready issues in an epic at once.
+**Trigger**: User wants to launch parallel agents across all ready tasks in an epic at once.
 
 ### Preflight
-- Verify `.claude/epics/<name>/epic.md` exists and has a `github:` field (i.e., it's been synced).
+- Verify `.claude/epics/<name>/epic.md` exists and has a `lark_record:` field (i.e., it's been synced).
 - Check for uncommitted changes: `git status --porcelain` — block if dirty.
 - Verify epic branch exists: `git branch -a | grep "epic/<name>"`
 
@@ -188,13 +205,13 @@ Sync updates: "sync issue <N>"
 - In Progress: already has an execution file
 - Complete: status=closed
 
-**Step 3 — Analyze any ready tasks** that don't have an analysis file yet (run issue analysis inline).
+**Step 3 — Analyze any ready tasks** that don't have an analysis file yet (run task analysis inline).
 
-**Step 4 — Launch agents** for all ready tasks following the same per-issue agent launch pattern above.
+**Step 4 — Launch agents** for all ready tasks following the same per-task agent launch pattern above.
 
-**Step 5 — Create/update** `.claude/epics/<name>/execution-status.md` with all active agents and queued issues.
+**Step 5 — Create/update** `.claude/epics/<name>/execution-status.md` with all active agents and queued tasks.
 
-**Step 6 — As agents complete**, check if blocked issues are now unblocked and launch those agents.
+**Step 6 — As agents complete**, check if blocked tasks are now unblocked and launch those agents.
 
 ---
 
@@ -203,7 +220,7 @@ Sync updates: "sync issue <N>"
 When multiple agents work in the same worktree simultaneously:
 
 - Each agent works only on files in its assigned stream scope.
-- Agents commit frequently with `Issue #<N>: <description>` format.
+- Agents commit frequently with `Task #<N>: <description>` format.
 - Before modifying a shared file, check `git status <file>` — if another agent has it modified, wait and pull first.
 - Agents sync via commits: `git pull --rebase origin epic/<name>` before starting new file work.
 - Conflicts are never auto-resolved — agents report them and pause.
