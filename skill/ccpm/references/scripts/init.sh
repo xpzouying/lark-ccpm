@@ -54,9 +54,10 @@ fi
 echo ""
 echo "🔐 Checking Feishu authentication..."
 lark_status=$(lark-cli auth status 2>&1)
-if echo "$lark_status" | jq -e '.tokenStatus == "valid"' &> /dev/null; then
+lark_token_status=$(echo "$lark_status" | jq -r '.tokenStatus // empty')
+if [ -n "$lark_token_status" ] && [ "$lark_token_status" != "null" ]; then
   lark_user=$(echo "$lark_status" | jq -r '.userName')
-  echo "  ✅ Feishu authenticated as: $lark_user"
+  echo "  ✅ Feishu authenticated as: $lark_user (token: $lark_token_status)"
 else
   echo "  ❌ Feishu not authenticated"
   echo "  Please run: lark-cli auth login"
