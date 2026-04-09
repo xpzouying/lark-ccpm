@@ -218,9 +218,9 @@ glab mr view <N>
 ## Naming Conventions
 
 - Feature names: kebab-case, lowercase, letters/numbers/hyphens, starts with a letter
-- Task files before sync: `001.md`, `002.md`, ... (sequential)
-- Task files after sync: renamed to GitHub issue number (e.g., `1234.md`)
-- Labels applied on sync: `epic`, `epic:<name>`, `feature` (for epics); `task`, `epic:<name>` (for tasks)
+- Task files: `001.md`, `002.md`, ... (sequential, never renamed)
+- Record ID stored in frontmatter `lark_record:` field, not in filename
+- Labels in Lark Base: `类型` field set to `Epic` / `Task` / `Bug`; `标签` multi-select for `epic:<name>` grouping
 
 ---
 
