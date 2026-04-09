@@ -222,15 +222,11 @@ skill/ccpm/
 
 ```yaml
 lark:
-  base_token: <飞书多维表格 App Token>
+  base_token: <飞书多维表格 Base Token>
   table_id: <任务表 Table ID>
 
-gitlab:
-  project: <GitLab 项目路径>
-  default_branch: main
-
 notifications:
-  chat_id: <飞书群聊 ID，可选>
+  webhook_url: <飞书群机器人 webhook URL，可选>
 ```
 
 ---
