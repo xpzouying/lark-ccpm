@@ -281,33 +281,6 @@ if [ -z "$BASE_TOKEN" ]; then
   fi
 fi
 
-# ── GitLab Project Configuration ────────────────────────────────────
-echo ""
-echo "🔗 Configuring GitLab project..."
-
-GITLAB_PROJECT=""
-GITLAB_DEFAULT_BRANCH="main"
-
-# Try to detect from git remote
-if git remote -v 2>/dev/null | grep -q origin; then
-  remote_url=$(git remote get-url origin 2>/dev/null)
-  # Extract project path from SSH or HTTPS URL
-  GITLAB_PROJECT=$(echo "$remote_url" | sed -E 's|.*[:/]([^/]+/[^/]+)(\.git)?$|\1|')
-  echo "  Detected from remote: $GITLAB_PROJECT"
-fi
-
-if [ -z "$GITLAB_PROJECT" ]; then
-  read -r -p "  Enter GitLab project path (e.g., mygroup/myproject): " GITLAB_PROJECT
-fi
-
-# Detect default branch
-detected_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
-if [ -n "$detected_branch" ]; then
-  GITLAB_DEFAULT_BRANCH="$detected_branch"
-fi
-
-echo "  ✅ GitLab project: $GITLAB_PROJECT (branch: $GITLAB_DEFAULT_BRANCH)"
-
 # ── Write Config File ───────────────────────────────────────────────
 echo ""
 echo "📝 Writing .claude/lark-ccpm.yml..."
@@ -316,12 +289,8 @@ lark:
   base_token: ${BASE_TOKEN}
   table_id: ${TABLE_ID}
 
-gitlab:
-  project: ${GITLAB_PROJECT}
-  default_branch: ${GITLAB_DEFAULT_BRANCH}
-
 notifications:
-  chat_id: ""
+  webhook_url: ""
 CFGEOF
 echo "  ✅ Config saved to .claude/lark-ccpm.yml"
 
@@ -338,10 +307,10 @@ else
 fi
 
 # Test GitLab access
-if glab repo view "$GITLAB_PROJECT" &> /dev/null; then
-  echo "  ✅ GitLab project accessible: $GITLAB_PROJECT"
+if glab repo view &> /dev/null; then
+  echo "  ✅ GitLab project accessible"
 else
-  echo "  ⚠️ Cannot access GitLab project: $GITLAB_PROJECT"
+  echo "  ⚠️ Cannot access GitLab project"
   echo "  Check authentication: glab auth status"
 fi
 
@@ -380,7 +349,7 @@ echo "  lark-cli: $(lark-cli --version 2>/dev/null || echo 'unknown')"
 echo "  glab: $(glab version 2>/dev/null | head -1 || echo 'unknown')"
 echo "  Feishu Base: $BASE_TOKEN"
 echo "  Table: $TABLE_ID"
-echo "  GitLab: $GITLAB_PROJECT"
+echo "  GitLab: $(git remote get-url origin 2>/dev/null || echo 'no remote')"
 echo ""
 echo "🎯 Next Steps:"
 echo "  1. Create your first PRD: /pm:prd-new <feature-name>"

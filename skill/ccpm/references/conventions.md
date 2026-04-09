@@ -115,22 +115,17 @@ All Lark and GitLab settings are stored in `.claude/lark-ccpm.yml`:
 
 ```yaml
 lark:
-  app_token: <飞书多维表格 App Token>
+  base_token: <飞书多维表格 Base Token>
   table_id: <任务表 Table ID>
 
-gitlab:
-  project: <GitLab 项目路径, e.g. mygroup/myproject>
-  default_branch: main
-
 notifications:
-  chat_id: <飞书群聊 ID, optional>
+  webhook_url: <飞书群机器人 webhook URL, optional>
 ```
 
 Read config values:
 ```bash
-APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' .claude/lark-ccpm.yml | awk '{print $2}')  
 TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
-GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
 ```
 
 ---
@@ -176,9 +171,8 @@ lark-cli base +record-list --base-token "$APP_TOKEN" --table-id "$TABLE_ID"
 ### Repository Safety Check (run before any write operation)
 ```bash
 remote_url=$(git remote get-url origin 2>/dev/null || echo "")
-GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
-if [[ -z "$GITLAB_PROJECT" ]]; then
-  echo "❌ No GitLab project configured. Run init to set up .claude/lark-ccpm.yml"
+if [[ -z "$remote_url" ]]; then
+  echo "❌ No git remote configured."
   exit 1
 fi
 ```

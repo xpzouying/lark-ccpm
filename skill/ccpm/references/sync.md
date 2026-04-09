@@ -11,9 +11,6 @@ This phase covers pushing local epics/tasks to Feishu Base (飞书多维表格) 
 ```bash
 APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
 TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
-GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
-GITLAB_DEFAULT_BRANCH=$(grep 'default_branch:' .claude/lark-ccpm.yml | awk '{print $2}')
-
 if [ -z "$APP_TOKEN" ] || [ -z "$TABLE_ID" ]; then
   echo "❌ Missing Lark config. Run init first to create .claude/lark-ccpm.yml"
   exit 1
@@ -206,10 +203,11 @@ lark-cli base +record-upsert \
 
 Optionally, send a notification to the project chat:
 ```bash
-CHAT_ID=$(grep 'chat_id:' .claude/lark-ccpm.yml | awk '{print $2}')
-if [ -n "$CHAT_ID" ]; then
-  lark-cli im +send --chat-id "$CHAT_ID" \
-    --text "📊 Task update: <task_name> — ${completion_pct}% complete"
+WEBHOOK_URL=$(grep 'webhook_url:' .claude/lark-ccpm.yml | awk '{print $2}')
+if [ -n "$WEBHOOK_URL" ]; then
+  curl -s -X POST "$WEBHOOK_URL" \
+    -H "Content-Type: application/json" \
+    -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"📊 Task update: <task_name> — ${completion_pct}% complete\"}}"
 fi
 ```
 
@@ -270,7 +268,6 @@ cd ../epic-<name>
 # Create MR on GitLab
 glab mr create \
   --source-branch "epic/<name>" \
-  --target-branch "$GITLAB_DEFAULT_BRANCH" \
   --title "Epic: <name>" \
   --description "Merges epic <name>. Lark Base epic record: $epic_record_id"
 
