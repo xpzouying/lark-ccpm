@@ -250,7 +250,7 @@ fi
 echo ""
 echo "📋 Ensuring required fields exist..."
 
-TABLE_NAME=$(lark-cli base +table-get --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" 2>&1 | jq -r '.data.name // "项目任务"')
+TABLE_NAME=$(lark-cli base +table-list --base-token "$BASE_TOKEN" 2>&1 | jq -r ".data.items[] | select(.table_id==\"$TABLE_ID\") | .table_name // \"项目任务\"")
 
 # Text fields
 lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
@@ -313,7 +313,16 @@ lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
 echo "  ✅ All fields ensured (including 负责人, 所属 Epic, 依赖任务, 冲突任务)"
 
 # ── Write Config File ───────────────────────────────────────────────
+# ── Webhook Configuration (optional) ────────────────────────────────
 echo ""
+echo "🔔 Feishu webhook for notifications (optional):"
+echo "  Configure a group bot webhook to receive task updates."
+echo "  See: 群设置 → 群机器人 → 添加机器人 → 自定义机器人 → 复制 webhook URL"
+echo ""
+read -r -p "  Paste webhook URL (or press Enter to skip): " WEBHOOK_URL
+echo ""
+
+# ── Write Config File ───────────────────────────────────────────────
 echo "📝 Writing .claude/lark-ccpm.yml..."
 cat > .claude/lark-ccpm.yml <<CFGEOF
 lark:
@@ -321,7 +330,7 @@ lark:
   table_id: ${TABLE_ID}
 
 notifications:
-  webhook_url: ""
+  webhook_url: ${WEBHOOK_URL}
 CFGEOF
 echo "  ✅ Config saved to .claude/lark-ccpm.yml"
 
