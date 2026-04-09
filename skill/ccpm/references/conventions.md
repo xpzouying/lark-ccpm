@@ -140,7 +140,7 @@ GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
 ### Authentication
 Don't pre-check authentication. Run the `lark-cli` command and handle failure:
 ```bash
-lark-cli base record list --app "$APP_TOKEN" --table "$TABLE_ID" --limit 1 \
+lark-cli base +record-list --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --limit 1 \
   || echo "❌ lark-cli failed. Run: lark-cli auth login"
 ```
 
@@ -152,20 +152,21 @@ grep 'lark_record:' <file> | awk '{print $2}'
 
 ### Creating Records
 ```bash
-lark-cli base record create --app "$APP_TOKEN" --table "$TABLE_ID" \
-  --fields '{"标题":"<title>", "类型":"<Epic|Task>", "状态":"Open"}'
+result=$(lark-cli base +record-upsert --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"标题":"<title>","类型":"<Epic|Task>","状态":"Open"}')
+record_id=$(echo "$result" | jq -r '.data.record.record_id_list[0]')
 ```
 
 ### Updating Records
 ```bash
-lark-cli base record update --app "$APP_TOKEN" --table "$TABLE_ID" \
-  --record "$RECORD_ID" --fields '{"状态":"In Progress"}'
+lark-cli base +record-upsert --base-token "$APP_TOKEN" --table-id "$TABLE_ID" \
+  --record-id "$RECORD_ID" --json '{"状态":"In Progress"}'
 ```
 
 ### Querying Records
 ```bash
-lark-cli base record get --app "$APP_TOKEN" --table "$TABLE_ID" --record "$RECORD_ID"
-lark-cli base record list --app "$APP_TOKEN" --table "$TABLE_ID" --filter '<filter>'
+lark-cli base +record-get --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID"
+lark-cli base +record-list --base-token "$APP_TOKEN" --table-id "$TABLE_ID"
 ```
 
 ---
