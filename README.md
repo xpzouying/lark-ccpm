@@ -1,433 +1,286 @@
-# CCPM – The Project Manager Agent
+# CCPM – 飞书 + GitLab 项目管理 Agent
 
-[![Agent Skills](https://img.shields.io/badge/Agent_Skills-compatible-4b3baf)](https://agentskills.io)
-&nbsp;
-[![Eval Score](https://img.shields.io/badge/eval_score-100%25-brightgreen)](#proven-results)
-&nbsp;
-[![GitHub Issues](https://img.shields.io/badge/+-GitHub%20Issues-1f2328)](https://github.com/automazeio/ccpm)
-&nbsp;
-[![MIT License](https://img.shields.io/badge/License-MIT-28a745)](LICENSE)
-&nbsp;
-[![Follow on 𝕏](https://img.shields.io/badge/𝕏-@aroussi-1c9bf0)](http://x.com/intent/follow?screen_name=aroussi)
-&nbsp;
-[![Star this repo](https://img.shields.io/github/stars/automazeio/ccpm.svg?style=social&label=Star%20this%20repo&maxAge=60)](https://github.com/automazeio/ccpm)
-
-### Spec-driven development for AI agents – ship ~~faster~~ _better_ using PRDs, GitHub issues, and multiple agents running in parallel.
-
-Stop losing context. Stop blocking on tasks. Stop shipping bugs. CCPM gives your AI agent a structured PM brain: turn ideas into PRDs, PRDs into epics, epics into GitHub issues, and issues into production code — with full traceability at every step.
+基于 [CCPM](https://github.com/automazeio/ccpm) 的飞书多维表格 + GitLab 适配版。用 AI Agent 驱动的结构化开发流程：**PRD → Epic → 飞书任务 → 并行 Agent → 代码交付**。
 
 ---
 
-> [!IMPORTANT]
-> 📢 **CCPM is now an AGENT SKILL!** It works with any [Agent Skills–compatible](https://agentskills.io) harness that supports skills: **Claude Code, Codex, OpenCode, Factory, Amp, Cursor, and more.**
+## 为什么做这个
+
+团队使用飞书做协作、自建 GitLab 做代码管理，但 CCPM 原版绑定 GitHub 生态。本项目将外部依赖替换为：
+
+| 原来 | 现在 |
+|------|------|
+| GitHub Issues（任务管理） | **飞书多维表格**（通过 lark-cli） |
+| GitHub PR（代码管理） | **GitLab MR**（通过 glab CLI） |
+
+五阶段流程、本地文件结构、并行执行能力保持不变。
 
 ---
 
-![CCPM](screenshot.webp)
+## 快速开始
 
-## Table of Contents
-
-- [Background](#background)
-- [The Workflow](#the-workflow)
-- [What Makes This Different](#what-makes-this-different)
-- [Why GitHub Issues](#why-github-issues)
-- [Core Principle: No Vibe Coding](#core-principle-no-vibe-coding)
-- [The Parallel Execution System](#the-parallel-execution-system)
-- [Key Features & Benefits](#key-features--benefits)
-- [Install](#install)
-- [Usage](#usage)
-- [Workflow Phases](#workflow-phases)
-- [Skill Structure](#skill-structure)
-- [Example Flow](#example-flow)
-- [Proven Results](#proven-results)
-- [Local vs Remote](#local-vs-remote)
-- [Technical Notes](#technical-notes)
-- [Who's Behind this Project](#whos-behind-this-project)
-
----
-
-> [!NOTE]
-> Check out **[proof](https://github.com/automazeio/proof)** to get your agents capture visual proof of work of terminal output, browser interactions, and mobile simulator recordings.
-
----
-
-## Background
-
-Every team struggles with the same problems:
-- **Context evaporates** between sessions, forcing constant re-discovery
-- **Parallel work creates conflicts** when multiple agents touch the same code
-- **Requirements drift** as verbal decisions override written specs
-- **Progress becomes invisible** until the very end
-
-CCPM solves all of that.
-
----
-
-## The Workflow
-
-```mermaid
-graph LR
-    A[PRD Creation] --> B[Epic Planning]
-    B --> C[Task Decomposition]
-    C --> D[GitHub Sync]
-    D --> E[Parallel Execution]
-```
-
-### See It In Action
-
-```
-"I want to build a notification system — where do we start?"
-→ Guided brainstorming + PRD creation
-
-"break down the notification-system epic"
-→ Parallelizable task files with dependencies
-
-"sync the notification-system epic to GitHub"
-→ Epic issue + sub-issues + worktree
-
-"start working on issue 42"
-→ Parallel stream analysis + multiple agents launched
-
-"what's our standup for today?"
-→ Instant report from project files
-```
-
----
-
-## What Makes This Different
-
-| Traditional AI Development | CCPM |
-|---|---|
-| Context lost between sessions | **Persistent context** across all work |
-| One agent, one task | **Parallel agents** on independent streams |
-| Vibe coding from memory | **Spec-driven** with full traceability |
-| Progress hidden in chat logs | **Transparent audit trail** in GitHub |
-| Scattered status updates | **Structured standup, blocked, next** |
-
----
-
-## Why GitHub Issues
-
-Most AI coding workflows operate in isolation — a single session with no shared state. CCPM uses GitHub Issues as the source of truth, which unlocks something fundamentally different:
-
-**Team collaboration** — multiple agents (or humans) work on the same project simultaneously. Progress is visible in real-time through issue comments.
-
-**Seamless handoffs** — an agent can start a task, a human can finish it, or vice versa. No "what did the AI do?" meetings.
-
-**Single source of truth** — no separate databases or project management tools. Issue state is project state. Comments are the audit trail.
-
-**Works with what you have** — no dependency on GitHub Projects. Integrates with existing labels, milestones, and PR workflows.
-
----
-
-## Core Principle: No Vibe Coding
-
-> **Every line of code must trace back to a specification.**
-
-CCPM enforces a strict 5-phase discipline:
-
-1. **🧠 Brainstorm** — think deeper than comfortable
-2. **📝 Document** — write specs that leave nothing to interpretation
-3. **📐 Plan** — architect with explicit technical decisions
-4. **⚡ Execute** — build exactly what was specified
-5. **📊 Track** — maintain transparent progress at every step
-
-No shortcuts. No assumptions. No regrets.
-
----
-
-## The Parallel Execution System
-
-### Issues Aren't Atomic
-
-Traditional thinking: **one issue = one agent = one task**
-
-Reality: a single "Implement user authentication" issue is actually:
-
-- **Agent 1**: Database tables and migrations
-- **Agent 2**: Service layer and business logic
-- **Agent 3**: API endpoints and middleware
-- **Agent 4**: UI components and forms
-- **Agent 5**: Test suites and documentation
-
-All running **simultaneously** in the same worktree.
-
-### The Math of Velocity
-
-| Approach | Agents working | Wall time |
-|---|---|---|
-| Traditional (serial) | 1 | 5x |
-| CCPM (parallel streams) | 5 | 1x |
-
-### Context Stays Clean
-
-Each agent handles its own context in isolation. Your main conversation becomes the conductor — it never drowns in implementation details. Agents read from `.claude/epics/` and commit progress back through Git.
-
----
-
-## Key Features & Benefits
-
-**🧠 Context preservation** — project state lives in files, not in your head or chat history. Start a session anywhere, any time.
-
-**⚡ Parallel execution** — tasks marked `parallel: true` run concurrently across multiple agents without conflicts.
-
-**🔗 GitHub native** — works with tools your team already uses. No dependency on the Projects API.
-
-**📊 Full traceability** — every decision documented. PRD → Epic → Task → Issue → Code → Commit.
-
-**🤖 Deterministic ops run as scripts** — status, standup, search, validate all run as bash scripts: fast, consistent, no LLM token cost.
-
-**🌐 Harness-agnostic** — follows the [agentskills.io](https://agentskills.io) open standard. Works with Factory, Claude Code, Amp, OpenCode, Codex, Cursor, and more.
-
----
-
-## Install
-
-CCPM is a standard [Agent Skill](https://agentskills.io). Point your harness at `skill/ccpm/` — that's it.
-
-### Clone the repo
+### 前置条件
 
 ```bash
-git clone https://github.com/automazeio/ccpm.git
+# 1. lark-cli（飞书 CLI）
+npm install -g @nicepkg/lark-cli
+lark-cli auth login
+
+# 2. glab（GitLab CLI）
+brew install glab   # 或 apt-get install glab
+glab auth login --hostname dev.msh.team
+
+# 3. jq（JSON 解析）
+brew install jq     # 或 apt-get install jq
 ```
 
-### Factory / Droid
+### 安装 Skill
 
 ```bash
-# Symlink into your skills directory
-ln -s /path/to/ccpm/skill/ccpm ~/.factory/skills/ccpm
+# 在你的项目根目录
+mkdir -p .claude/skills
+ln -s /path/to/lark-ccpm/skill/ccpm .claude/skills/ccpm
 ```
 
-### Claude Code
-
-In your project root, add a `skills/` directory and symlink or copy the skill:
+### 初始化项目
 
 ```bash
-ln -s /path/to/ccpm/skill/ccpm .claude/skills/ccpm
+bash .claude/skills/ccpm/references/scripts/init.sh
 ```
 
-### Any other Agent Skills–compatible harness
-
-Point it at `skill/ccpm/`. It follows the [agentskills.io](https://agentskills.io) standard and works out of the box.
-
-### Prerequisites
-
-- `git` and `gh` CLI (authenticated: `gh auth login`)
-- A GitHub repository for your project
+初始化会：
+1. 检查 lark-cli / glab 认证状态
+2. 创建飞书多维表格（或连接已有表）— 支持指定文件夹
+3. 自动创建 15 个标准字段（含依赖关联字段）
+4. 检测 GitLab 项目路径
+5. 生成 `.claude/lark-ccpm.yml` 配置文件
+6. 验证飞书和 GitLab 的连通性
 
 ---
 
-## Usage
+## 使用教程
 
-CCPM activates automatically when your agent detects PM intent. Just talk naturally — no special syntax needed.
+### 整体流程
 
-### Natural language triggers
+```
+Plan → Structure → Sync → Execute → Track
+ 写 PRD    拆 Epic/Task   同步到飞书    Agent 执行    跟踪进度
+```
 
-| What you say | What happens |
-|---|---|
-| "I want to build X" / "let's plan X" | Brainstorming + PRD creation |
-| "parse the X PRD" / "create an epic for X" | PRD → technical epic |
-| "break down the X epic" | Epic decomposition into tasks |
-| "sync the X epic to GitHub" | Issues created, worktree set up |
-| "start working on issue N" | Analysis + parallel agents launched |
-| "standup" / "what's our status" | Bash script runs instantly |
-| "what's next" / "what's blocked" | Priority queue from project files |
-| "close issue N" | Local + GitHub updated |
-| "merge the X epic" | Tests, merge, cleanup |
+每个阶段需要用户**主动触发**，阶段之间有 review 点。
+
+### Phase 1: Plan — 写 PRD
+
+```
+你: "I want to build a notification system"
+```
+
+CCPM 会引导你做头脑风暴，问你：问题是什么？用户是谁？成功标准？约束？范围外的内容？
+
+然后生成结构化 PRD 到 `.claude/prds/notification-system.md`。
+
+```
+CCPM: ✅ PRD created. Ready to create technical epic?
+      Say: parse the notification-system PRD
+```
+
+### Phase 2: Structure — 拆分 Epic + Tasks
+
+```
+你: "parse the notification-system PRD"
+```
+
+生成技术 Epic（架构决策、实现策略）到 `.claude/epics/notification-system/epic.md`。
+
+```
+你: "decompose the notification-system epic"
+```
+
+拆分为具体 Task 文件（`001.md`, `002.md`...），每个 Task 包含：
+- 验收标准
+- 依赖关系（`depends_on`）
+- 并行标记（`parallel: true/false`）
+- 冲突标记（`conflicts_with`）
+- 工作量估算
+
+### Phase 3: Sync — 同步到飞书多维表格
+
+```
+你: "sync the notification-system epic"
+```
+
+CCPM 会：
+1. 在飞书多维表格中创建 Epic 记录
+2. 为每个 Task 创建记录，设置**所属 Epic** 关联
+3. 将**依赖任务**和**冲突任务**写入关联字段
+4. 回写 `lark_record` ID 到本地 frontmatter
+5. 创建 git worktree 用于开发
+
+在飞书中你会看到：
+
+| 标题 | 类型 | 状态 | 所属 Epic | 依赖任务 | 可并行 |
+|------|------|------|-----------|---------|--------|
+| Epic: notification-system | Epic | Open | — | — | ❌ |
+| 数据库 schema 设计 | Task | Open | ↑ Epic | — | ✅ |
+| API 端点实现 | Task | Open | ↑ Epic | 数据库 schema | ❌ |
+
+### Phase 4: Execute — Agent 并行执行
+
+```
+你: "start working on task 001"
+```
+
+CCPM 分析 Task 的独立工作流，启动并行 Agent。每个 Agent：
+- 只修改自己负责的文件
+- 以 `Task #001: description` 格式 commit
+- 在飞书中更新任务状态为 "In Progress"
+
+```
+你: "start the notification-system epic"
+```
+
+一次性启动所有 `parallel: true` 且依赖已满足的 Task。
+
+### Phase 5: Track — 跟踪进度
+
+```
+你: "standup"          → 今日进展报告
+你: "what's next"      → 下一个可开始的任务
+你: "what's blocked"   → 被阻塞的任务
+你: "status"           → 全局项目状态
+```
+
+Track 操作用 bash 脚本执行，不消耗 LLM token。
+
+### 关闭任务和合并 Epic
+
+```
+你: "close task 001"
+```
+→ 更新本地 frontmatter + 飞书记录状态为 Closed + 重算 Epic 进度
+
+```
+你: "merge the notification-system epic"
+```
+→ 运行测试 → 创建 GitLab MR → 合并 → 清理 worktree → 归档 Epic
 
 ---
 
-## Workflow Phases
+## 自然语言命令速查
 
-### 1. Plan — Capture requirements
-
-```
-"I want to build a notification system — push, email, and in-app"
-```
-
-CCPM conducts guided brainstorming before writing anything. It asks about the problem, users, success criteria, constraints, and what's out of scope — then creates a structured PRD at `.claude/prds/<name>.md`.
-
-When ready: "parse the notification-system PRD" → produces a technical epic at `.claude/epics/notification-system/epic.md` with architecture decisions, technical approach, and task preview.
-
-### 2. Structure — Break it down
-
-```
-"break down the notification-system epic into tasks"
-```
-
-Each task gets a file with acceptance criteria, effort estimate, `depends_on`, `parallel`, and `conflicts_with` metadata. Tasks are intelligently batched for parallel creation. ≤10 tasks per epic by default.
-
-### 3. Sync — Push to GitHub
-
-```
-"sync the notification-system epic to GitHub"
-```
-
-Creates an epic issue, creates sub-issues for each task, renames local files to match GitHub issue numbers, sets up a dedicated worktree (`../epic-notification-system/`), and creates a mapping file for reference.
-
-### 4. Execute — Start building
-
-```
-"start working on issue 42"
-```
-
-Analyzes the issue for independent work streams, launches parallel agents scoped to their own files, and sets up progress tracking. Each agent commits with `Issue #N: description` and coordinates through Git.
-
-### 5. Track — Know where things stand
-
-```
-"standup" / "what's blocked" / "what's next"
-```
-
-All tracking operations run as bash scripts — instant output, no LLM overhead. The scripts scan `.claude/epics/` and report what's in progress, what's next, and what's blocked.
+| 你说的话 | 触发的阶段 |
+|---------|-----------|
+| "I want to build X" / "plan X" | Plan — 写 PRD |
+| "parse the X PRD" | Plan — PRD → Epic |
+| "decompose the X epic" | Structure — 拆分 Tasks |
+| "sync the X epic" | Sync — 同步到飞书多维表格 |
+| "start working on task 001" | Execute — 启动 Agent |
+| "start the X epic" | Execute — 并行启动所有就绪 Task |
+| "standup" / "status" | Track — 进度报告 |
+| "what's next" / "what's blocked" | Track — 优先级队列 |
+| "close task 001" | Sync — 关闭任务 |
+| "merge the X epic" | Sync — 合并 Epic |
+| "found a bug in task 003" | Sync — 创建 Bug 记录 |
 
 ---
 
-## Skill Structure
+## 项目文件结构
+
+### Skill 文件（安装到项目中）
 
 ```
 skill/ccpm/
-├── SKILL.md                  # Entry point — detects intent, routes to reference
+├── SKILL.md                  # 入口 — 意图识别 + 路由
 └── references/
-    ├── plan.md               # PRD writing + parsing to epic
-    ├── structure.md          # Epic decomposition into tasks
-    ├── sync.md               # GitHub sync, progress comments, close, merge
-    ├── execute.md            # Issue analysis + parallel agent launch
-    ├── track.md              # Status, standup, search, next, blocked
-    ├── conventions.md        # File formats, frontmatter schemas, git rules
-    └── scripts/              # Bash scripts for deterministic operations
-        ├── status.sh
-        ├── standup.sh
-        ├── epic-list.sh
-        ├── search.sh
-        └── ...               # 14 scripts total
+    ├── plan.md               # PRD 编写 + Epic 生成
+    ├── structure.md          # Epic 拆分为 Tasks
+    ├── sync.md               # 飞书同步、进度更新、关闭、合并
+    ├── execute.md            # Task 分析 + 并行 Agent 启动
+    ├── track.md              # 状态、站会、搜索、下一步、阻塞
+    ├── conventions.md        # 文件格式、frontmatter schema、命令约定
+    └── scripts/              # Bash 脚本（确定性操作）
 ```
 
-Your project files live in `.claude/` in your project root:
+### 项目运行时文件（git tracked）
 
 ```
 .claude/
-├── prds/                     # Product requirement documents
+├── lark-ccpm.yml             # 飞书 + GitLab 配置
+├── prds/                     # PRD 文档
 ├── epics/
 │   └── <feature>/
-│       ├── epic.md           # Technical epic
-│       ├── <N>.md            # Task files (named by GitHub issue number after sync)
-│       ├── <N>-analysis.md   # Parallel work stream analysis
-│       └── updates/          # Agent progress tracking
-└── (archived epics)
+│       ├── epic.md           # 技术 Epic
+│       ├── 001.md            # Task 文件（保持序号，不重命名）
+│       ├── 001-analysis.md   # 并行工作流分析
+│       └── updates/          # Agent 进度跟踪
+└── epics/archived/           # 已完成的 Epic
 ```
 
-Files are the source of truth — plain markdown that lives in your repo, no external services.
+### 配置文件
 
----
+`.claude/lark-ccpm.yml`（init.sh 自动生成）：
 
-## Example Flow
+```yaml
+lark:
+  base_token: <飞书多维表格 App Token>
+  table_id: <任务表 Table ID>
 
-```
-You: "I want to build a payment integration with Stripe — subscriptions and one-time charges"
+gitlab:
+  project: <GitLab 项目路径>
+  default_branch: main
 
-CCPM: Asks 5 clarifying questions about scope, users, success criteria...
-
-You: [answers]
-
-CCPM: ✅ PRD created: .claude/prds/payment-integration.md
-      Ready to create the technical epic?
-
-You: "yes, parse it"
-
-CCPM: ✅ Epic created: .claude/epics/payment-integration/epic.md
-      8 task categories identified. Ready to decompose?
-
-You: "break it down"
-
-CCPM: ✅ Created 7 tasks — 5 parallel, 2 sequential
-      Ready to push to GitHub?
-
-You: "sync it"
-
-CCPM: ✅ Epic #1234 created
-      ✅ 7 sub-issues created (#1235–#1241)
-      ✅ Worktree: ../epic-payment-integration/
-
-You: "start working on issue 1235"
-
-CCPM: Analyzed 3 parallel streams:
-      Stream A: Stripe client setup ✓ Started
-      Stream B: Webhook handler ✓ Started
-      Stream C: Database models ⏸ Waiting on A
-
-You: "what's our standup?"
-
-CCPM: [runs standup.sh instantly]
-      📅 Daily Standup — 2026-03-18
-      🔄 In Progress: Issue #1235 (payment-integration) — 60%
-      ⏭️ Next: Issue #1236 — Subscription billing logic
-      📊 Tasks: 2 in progress, 5 open, 0 closed
+notifications:
+  chat_id: <飞书群聊 ID，可选>
 ```
 
 ---
 
-## Proven Results
+## 飞书多维表格字段
 
-Teams using this system report:
-- **89% less time** lost to context switching
-- **5–8 parallel tasks** vs 1 previously
-- **75% reduction** in bug rates — due to detailed task breakdown before coding
-- **Up to 3× faster** feature delivery
+init.sh 自动创建 15 个字段：
 
-### Benchmark
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| 标题 | text | Epic/Task/Bug 标题 |
+| 描述 | text | 详细描述 |
+| 类型 | select | Epic / Task / Bug |
+| 状态 | select | Open / In Progress / Closed |
+| 进度 | number (progress) | 0-100% |
+| 可并行 | checkbox | 是否可并行执行 |
+| 标签 | select (multi) | epic, task, bug 等 |
+| 所属 Epic | link (self) | Task → Epic 父子关系 |
+| 依赖任务 | link (self) | Task → Task 前置依赖 |
+| 冲突任务 | link (self) | 修改相同文件的任务 |
+| 负责人 | user | 指派的成员 |
+| 本地文件 | text | 对应的 .claude/ 文件路径 |
+| GitLab MR | text (url) | MR 链接 |
+| 创建时间 | created_at | 系统自动 |
+| 更新时间 | updated_at | 系统自动 |
 
-In structured evals comparing CCPM-equipped agents vs baseline (no skill):
-
-| Scenario | With CCPM | Without |
-|---|---|---|
-| PRD creation (brainstorm-first, correct paths) | ✅ 4/4 | ❌ 2/4 |
-| Issue execution (analysis + worktree checks) | ✅ 4/4 | ❌ 0/4 |
-| Standup (runs script, real data) | ✅ 3/3 | ❌ 1/3 |
-| **Overall** | **100%** | **27.7%** |
-
----
-
-## Local vs Remote
-
-| Operation | Local | GitHub |
-|---|---|---|
-| PRD creation | ✅ | — |
-| Implementation planning | ✅ | — |
-| Task breakdown | ✅ | ✅ (on sync) |
-| Execution | ✅ | — |
-| Progress updates | ✅ | ✅ (on sync) |
-| Final deliverables | — | ✅ |
+推荐视图配置详见 [飞书多维表格配置指南](docs/guides/feishu-base-setup.md)。
 
 ---
 
-## Technical Notes
+## 技术说明
 
-**GitHub integration** — uses `gh-sub-issue` extension for proper parent-child relationships. Falls back to task lists if not installed. Install with: `gh extension install yahsan2/gh-sub-issue`
+**飞书集成** — 通过 `lark-cli base +record-upsert/+record-get/+record-list` 操作多维表格。JSON 格式直接传字段映射（无 `fields` 包裹），record ID 在 `.data.record.record_id_list[0]`。
 
-**File naming** — tasks start as `001.md`, `002.md` during decomposition. After GitHub sync, renamed to `{issue-id}.md` (e.g. `1234.md`). Issue #1234 = file `1234.md`.
+**GitLab 集成** — 通过 `glab mr create/merge/view` 管理 Merge Request。MR 链接自动回写到飞书记录。
 
-**Design decisions** — intentionally avoids GitHub Projects API complexity. All operations work on local files first for speed. GitHub sync is explicit and controlled. Worktrees provide clean git isolation for parallel work.
+**文件命名** — Task 文件使用自增序号（`001.md`, `002.md`），sync 后不重命名。Lark Record ID 存储在 frontmatter 的 `lark_record` 字段中。
 
-**Looking for v1?** — The original `/pm:*` Claude Code slash command system is preserved on the [`v1` branch](https://github.com/automazeio/ccpm/tree/v1).
+**依赖管理** — 通过飞书多维表格的自引用关联字段实现。`所属 Epic`、`依赖任务`、`冲突任务` 都是 link 类型字段，写入格式为 `[{"id":"rec_xxx"}]`。
 
----
-
-## Who's behind this project
-
-CCPM was developed at [Automaze](https://automaze.io) **for developers who ship, by developers who ship**.
-
-If CCPM helps your team ship better software:
-
-- ⭐ **[Star this repository](https://github.com/automazeio/ccpm)** to show your support
-- 🐦 **[Follow @aroussi on X](https://x.com/aroussi)** for updates and tips
+**离线支持** — 本地文件可离线操作，sync 时才需要网络。
 
 ---
 
-> [!TIP]
-> **Ship faster with Automaze.** We partner with founders to bring their vision to life, scale their business, and optimize for success.
-> **[Visit Automaze to book a call ›](https://automaze.io)**
+## 致谢
+
+基于 [CCPM (automazeio/ccpm)](https://github.com/automazeio/ccpm) 改造，感谢原作者 [@aroussi](https://x.com/aroussi) 的开创性工作。
 
 ---
 
-![Star History Chart](https://api.star-history.com/svg?repos=automazeio/ccpm)
+## License
+
+[MIT](LICENSE)
