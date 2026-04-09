@@ -109,29 +109,93 @@ sed '1,/^---$/d; 1,/^---$/d' <file> > /tmp/body.md
 
 ---
 
-## GitHub Operations
+## Configuration File
+
+All Lark and GitLab settings are stored in `.claude/lark-ccpm.yml`:
+
+```yaml
+lark:
+  app_token: <飞书多维表格 App Token>
+  table_id: <任务表 Table ID>
+
+gitlab:
+  project: <GitLab 项目路径, e.g. mygroup/myproject>
+  default_branch: main
+
+notifications:
+  chat_id: <飞书群聊 ID, optional>
+```
+
+Read config values:
+```bash
+APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
+```
+
+---
+
+## Lark Operations
+
+### Authentication
+Don't pre-check authentication. Run the `lark-cli` command and handle failure:
+```bash
+lark-cli base record list --app "$APP_TOKEN" --table "$TABLE_ID" --limit 1 \
+  || echo "❌ lark-cli failed. Run: lark-cli auth login"
+```
+
+### Getting Record IDs
+```bash
+# From a task file's lark_record field:
+grep 'lark_record:' <file> | awk '{print $2}'
+```
+
+### Creating Records
+```bash
+lark-cli base record create --app "$APP_TOKEN" --table "$TABLE_ID" \
+  --fields '{"标题":"<title>", "类型":"<Epic|Task>", "状态":"Open"}'
+```
+
+### Updating Records
+```bash
+lark-cli base record update --app "$APP_TOKEN" --table "$TABLE_ID" \
+  --record "$RECORD_ID" --fields '{"状态":"In Progress"}'
+```
+
+### Querying Records
+```bash
+lark-cli base record get --app "$APP_TOKEN" --table "$TABLE_ID" --record "$RECORD_ID"
+lark-cli base record list --app "$APP_TOKEN" --table "$TABLE_ID" --filter '<filter>'
+```
+
+---
+
+## GitLab Operations
 
 ### Repository Safety Check (run before any write operation)
 ```bash
 remote_url=$(git remote get-url origin 2>/dev/null || echo "")
-if [[ "$remote_url" == *"automazeio/ccpm"* ]]; then
-  echo "❌ Cannot write to the CCPM template repository."
-  echo "Update remote: git remote set-url origin https://github.com/YOUR/REPO.git"
+GITLAB_PROJECT=$(grep 'project:' .claude/lark-ccpm.yml | awk '{print $2}')
+if [[ -z "$GITLAB_PROJECT" ]]; then
+  echo "❌ No GitLab project configured. Run init to set up .claude/lark-ccpm.yml"
   exit 1
 fi
-REPO=$(echo "$remote_url" | sed 's|.*github.com[:/]||' | sed 's|\.git$||')
 ```
 
 ### Authentication
-Don't pre-check authentication. Run the `gh` command and handle failure:
+Don't pre-check authentication. Run the `glab` command and handle failure:
 ```bash
-gh <command> || echo "❌ GitHub CLI failed. Run: gh auth login"
+glab mr list --per-page 1 || echo "❌ GitLab CLI failed. Run: glab auth login"
 ```
 
-### Getting Issue Numbers
+### Creating Merge Requests
 ```bash
-# From a task file's github field:
-grep 'github:' <file> | grep -oE '[0-9]+$'
+glab mr create --title "<title>" --description "<description>"
+```
+
+### Viewing Merge Requests
+```bash
+glab mr view <N>
 ```
 
 ---
