@@ -11,16 +11,6 @@ A spec-driven development workflow: PRD → Epic → Lark Base Records → Paral
 
 Requirements live in files, not heads. Every feature starts as a PRD, becomes a technical epic, decomposes into Lark Base task records, and gets executed by parallel agents with full traceability.
 
-## Hard Rule — Never Skip Phases
-
-**ALL work MUST start from Phase 1 (Plan).** Never skip directly to implementation, no matter how small the task seems.
-
-- User says "do X" → Start by brainstorming and creating a PRD
-- User says "fix X" → Still create a PRD first (even a minimal one)
-- User says "update X" → Still create a PRD first
-
-The workflow is always: **Plan → Structure → Sync → Execute → Track**. No exceptions. No shortcuts. If you find yourself about to edit code or files directly without a PRD, STOP and go back to Phase 1.
-
 ## File Conventions
 
 Before doing anything, read `references/conventions.md` for path standards, frontmatter schemas, and operation rules. These apply to all phases.
