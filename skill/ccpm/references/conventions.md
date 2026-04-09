@@ -8,20 +8,20 @@ Read this before doing any file operations across all phases.
 
 ```
 .claude/
+├── lark-ccpm.yml                  # Project config (Lark + GitLab settings)
 ├── prds/
 │   └── <feature-name>.md          # Product requirement documents
 ├── epics/
 │   ├── <feature-name>/
 │   │   ├── epic.md                # Technical epic
-│   │   ├── <N>.md                 # Task files (named by GitHub issue number after sync)
+│   │   ├── <N>.md                 # Task files (sequential number, lark_record in frontmatter)
 │   │   ├── <N>-analysis.md        # Parallel work stream analysis
-│   │   ├── github-mapping.md      # Issue number → URL mapping
 │   │   ├── execution-status.md    # Active agents tracker
 │   │   └── updates/
-│   │       └── <issue_N>/
+│   │       └── <task_N>/
 │   │           ├── stream-A.md    # Per-agent progress
-│   │           ├── progress.md    # Overall issue progress
-│   │           └── execution.md  # Execution state
+│   │           ├── progress.md    # Overall task progress
+│   │           └── execution.md   # Execution state
 │   └── archived/
 │       └── <feature-name>/        # Completed epics
 └── context/                       # Project context docs (separate system)
