@@ -209,7 +209,8 @@ glab mr view <N>
   git checkout main && git pull origin main
   git worktree add ../epic-<name> -b epic/<name>
   ```
-- Commit format inside epics: `Issue #<N>: <description>`
+- Commit format inside epics: `Task #<N>: <description>` (N = local task file number)
+- Push to GitLab remote: `git push origin epic/<name>`
 - Never use `--force` in any git operation
 
 ---
