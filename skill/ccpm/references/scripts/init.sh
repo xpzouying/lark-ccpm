@@ -44,7 +44,9 @@ if command -v lark-cli &> /dev/null; then
   echo "  ✅ lark-cli installed"
 else
   echo "  ❌ lark-cli not found"
-  echo "  Please install lark-cli: npm install -g @nicepkg/lark-cli"
+  echo "  Please install lark-cli:"
+  echo "    npm install -g @larksuite/cli"
+  echo "    npx skills add larksuite/cli -y -g"
   exit 1
 fi
 

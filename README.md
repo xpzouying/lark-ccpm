@@ -23,7 +23,8 @@
 
 ```bash
 # 1. lark-cli（飞书 CLI）
-npm install -g @nicepkg/lark-cli
+npm install -g @larksuite/cli
+npx skills add larksuite/cli -y -g
 lark-cli auth login
 
 # 2. glab（GitLab CLI）
