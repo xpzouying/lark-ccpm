@@ -50,7 +50,10 @@ created: <ISO 8601>
 updated: <ISO 8601>
 progress: 0%                # recalculated when tasks close
 prd: .claude/prds/<name>.md
-github: https://github.com/<owner>/<repo>/issues/<N>  # set on sync
+lark_record: <Record ID>    # 飞书多维表格 Record ID, set on sync
+lark_app: <App Token>       # 多维表格 App Token (also in .claude/lark-ccpm.yml)
+lark_table: <Table ID>      # 表 ID (also in .claude/lark-ccpm.yml)
+gitlab_mr: <MR URL>         # GitLab Merge Request URL, set after MR creation
 ---
 ```
 
@@ -61,17 +64,19 @@ name: <Task Title>
 status: open | in-progress | closed
 created: <ISO 8601>
 updated: <ISO 8601>
-github: https://github.com/<owner>/<repo>/issues/<N>  # set on sync
-depends_on: []              # issue numbers this must wait for
+lark_record: <Record ID>    # 飞书多维表格 Record ID, set on sync
+gitlab_mr: <MR URL>         # GitLab MR URL, set after MR creation
+depends_on: []              # lark_record IDs this must wait for
 parallel: true              # can run concurrently with non-conflicting tasks
-conflicts_with: []          # issue numbers that touch the same files
+conflicts_with: []          # lark_record IDs that touch the same files
 ---
 ```
 
 ### Progress (.claude/epics/<name>/updates/<N>/progress.md)
 ```yaml
 ---
-issue: <N>
+task: <N>                   # local task file number
+lark_record: <Record ID>    # corresponding Lark Base record
 started: <ISO 8601>
 last_sync: <ISO 8601>
 completion: 0%
