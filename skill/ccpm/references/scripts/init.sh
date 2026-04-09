@@ -251,7 +251,8 @@ fi
 echo ""
 echo "📋 Ensuring required fields exist..."
 
-TABLE_NAME=$(lark-cli base +table-list --base-token "$BASE_TOKEN" 2>&1 | jq -r ".data.items[] | select(.table_id==\"$TABLE_ID\") | .table_name // \"项目任务\"")
+TABLE_NAME=$(lark-cli base +table-list --base-token "$BASE_TOKEN" 2>/dev/null | jq -r ".data.items[] | select(.table_id==\"$TABLE_ID\") | .table_name" 2>/dev/null)
+[ -z "$TABLE_NAME" ] && TABLE_NAME="项目任务"
 
 # Text fields
 lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
