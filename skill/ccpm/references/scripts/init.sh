@@ -241,69 +241,76 @@ if [ -z "$BASE_TOKEN" ]; then
       exit 1
     fi
     echo "  ✅ Table created: $TABLE_ID"
-
-    echo "  Adding fields..."
-    # Text fields
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"text","name":"标题"}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"text","name":"描述"}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"text","name":"本地文件"}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"text","name":"GitLab MR","style":{"type":"url"}}' > /dev/null 2>&1
-    sleep 0.5
-
-    # Number + checkbox
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"number","name":"进度","style":{"type":"progress","percentage":true,"color":"Blue"}}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"checkbox","name":"可并行"}' > /dev/null 2>&1
-    sleep 0.5
-
-    # Select fields
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"select","name":"类型","options":[{"name":"Epic"},{"name":"Task"},{"name":"Bug"}]}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"select","name":"状态","options":[{"name":"Open"},{"name":"In Progress"},{"name":"Closed"}]}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"select","name":"标签","multiple":true,"options":[{"name":"epic"},{"name":"task"},{"name":"bug"}]}' > /dev/null 2>&1
-    sleep 0.5
-    echo "  ✅ Basic fields created"
-
-    # Self-referencing link fields for dependencies
-    echo "  Adding link fields for dependencies..."
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"link","name":"所属 Epic","link_table":"项目任务"}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"link","name":"依赖任务","link_table":"项目任务"}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"link","name":"冲突任务","link_table":"项目任务"}' > /dev/null 2>&1
-    sleep 0.5
-
-    # User field
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"user","name":"负责人","multiple":false}' > /dev/null 2>&1
-    sleep 0.5
-
-    # System fields
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"created_at","name":"创建时间"}' > /dev/null 2>&1
-    sleep 0.5
-    lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
-      --json '{"type":"updated_at","name":"更新时间"}' > /dev/null 2>&1
-
-    echo "  ✅ All fields created (including 负责人, 所属 Epic, 依赖任务, 冲突任务)"
   fi
 fi
+
+# ── Ensure Required Fields Exist ──────────────────────────────────
+# Runs for both new and existing tables. Already-existing fields
+# will fail silently (output suppressed), so this is idempotent.
+echo ""
+echo "📋 Ensuring required fields exist..."
+
+TABLE_NAME=$(lark-cli base +table-get --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" 2>&1 | jq -r '.data.name // "项目任务"')
+
+# Text fields
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"text","name":"标题"}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"text","name":"描述"}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"text","name":"本地文件"}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"text","name":"GitLab MR","style":{"type":"url"}}' > /dev/null 2>&1
+sleep 0.5
+
+# Number + checkbox
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"number","name":"进度","style":{"type":"progress","percentage":true,"color":"Blue"}}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"checkbox","name":"可并行"}' > /dev/null 2>&1
+sleep 0.5
+
+# Select fields
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"select","name":"类型","options":[{"name":"Epic"},{"name":"Task"},{"name":"Bug"}]}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"select","name":"状态","options":[{"name":"Open"},{"name":"In Progress"},{"name":"Closed"}]}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"select","name":"标签","multiple":true,"options":[{"name":"epic"},{"name":"task"},{"name":"bug"}]}' > /dev/null 2>&1
+sleep 0.5
+echo "  ✅ Basic fields ensured"
+
+# Self-referencing link fields (use actual table name for link_table)
+echo "  Ensuring link fields..."
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json "{\"type\":\"link\",\"name\":\"所属 Epic\",\"link_table\":\"$TABLE_NAME\"}" > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json "{\"type\":\"link\",\"name\":\"依赖任务\",\"link_table\":\"$TABLE_NAME\"}" > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json "{\"type\":\"link\",\"name\":\"冲突任务\",\"link_table\":\"$TABLE_NAME\"}" > /dev/null 2>&1
+sleep 0.5
+
+# User field
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"user","name":"负责人","multiple":false}' > /dev/null 2>&1
+sleep 0.5
+
+# System fields
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"created_at","name":"创建时间"}' > /dev/null 2>&1
+sleep 0.5
+lark-cli base +field-create --base-token "$BASE_TOKEN" --table-id "$TABLE_ID" \
+  --json '{"type":"updated_at","name":"更新时间"}' > /dev/null 2>&1
+
+echo "  ✅ All fields ensured (including 负责人, 所属 Epic, 依赖任务, 冲突任务)"
 
 # ── Write Config File ───────────────────────────────────────────────
 echo ""
