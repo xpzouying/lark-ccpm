@@ -1,5 +1,5 @@
 ---
-name: ccpm
+name: lark-ccpm
 description: "CCPM - spec-driven project management: PRD → Epic → Lark Base records → parallel agents → shipped code. Use this skill for anything in the software delivery lifecycle: writing a PRD ('write a PRD for X', 'let's plan X', 'scope this out'), parsing a PRD into an epic, decomposing an epic into tasks, syncing to Lark Base ('sync the X epic', 'push tasks to Lark Base'), starting work on an issue ('start working on issue N', 'let's work on issue N'), analyzing parallel work streams, running standups ('standup', 'run the standup'), checking status ('what's next', 'what's blocked', 'what are we working on'), closing tasks, or merging an epic. Use ccpm any time the user is talking about shipping a feature, managing work, or tracking progress — even if they don't say 'ccpm' or 'PRD'. Do NOT use for: debugging code, writing tests, reviewing PRs, or raw issue/PR operations with no delivery context."
 ---
 
