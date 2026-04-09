@@ -9,12 +9,22 @@ This phase covers pushing local epics/tasks to Feishu Base (飞书多维表格) 
 **Always load config before any sync operation:**
 
 ```bash
-APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' .claude/lark-ccpm.yml | awk '{print $2}')
 TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+WEBHOOK_URL=$(grep 'webhook_url:' .claude/lark-ccpm.yml | awk '{print $2}')
+
 if [ -z "$APP_TOKEN" ] || [ -z "$TABLE_ID" ]; then
   echo "❌ Missing Lark config. Run init first to create .claude/lark-ccpm.yml"
   exit 1
 fi
+
+# Helper: send webhook notification (no-op if WEBHOOK_URL is empty)
+notify() {
+  [ -z "$WEBHOOK_URL" ] && return
+  curl -s -X POST "$WEBHOOK_URL" \
+    -H "Content-Type: application/json" \
+    -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$1\"}}"
+}
 ```
 
 ---
@@ -147,6 +157,11 @@ git checkout main && git pull origin main
 git worktree add ../epic-<name> -b epic/<name>
 ```
 
+**Step 7 — Notify (optional):**
+```bash
+notify "📋 Epic synced: <name> — $task_count tasks created"
+```
+
 **Output:**
 ```
 ✅ Synced epic <name> to Lark Base
@@ -201,14 +216,9 @@ lark-cli base +record-upsert \
   --json "{\"描述\":$(echo "$new_desc" | jq -Rs .),\"进度\":$completion_pct}"
 ```
 
-Optionally, send a notification to the project chat:
+Notify (optional):
 ```bash
-WEBHOOK_URL=$(grep 'webhook_url:' .claude/lark-ccpm.yml | awk '{print $2}')
-if [ -n "$WEBHOOK_URL" ]; then
-  curl -s -X POST "$WEBHOOK_URL" \
-    -H "Content-Type: application/json" \
-    -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"📊 Task update: <task_name> — ${completion_pct}% complete\"}}"
-fi
+notify "📊 Task update: <task_name> — ${completion_pct}% complete"
 ```
 
 After posting: update `last_sync` in progress.md frontmatter, update `updated` in the task file.
@@ -245,6 +255,8 @@ lark-cli base +record-upsert \
 
 sed -i.bak "/^progress:/c\\progress: ${progress}%" .claude/epics/<name>/epic.md
 rm .claude/epics/<name>/epic.md.bak
+
+notify "✅ Task closed: <task_name> — Epic progress: ${progress}%"
 ```
 
 ---
@@ -294,6 +306,11 @@ lark-cli base +record-upsert \
 ```
 
 Update epic.md frontmatter: `status: completed`.
+
+Notify:
+```bash
+notify "🎉 Epic merged: <name> — all tasks completed"
+```
 
 Write MR URL back to epic frontmatter:
 ```bash
@@ -375,6 +392,11 @@ bug_record_id=$(echo "$bug_result" | jq -r '.data.record.record_id_list[0]')
 ```bash
 sed -i.bak "/^lark_record:/c\\lark_record: $bug_record_id" <bug_file>
 rm <bug_file>.bak
+```
+
+**Step 5 — Notify (optional):**
+```bash
+notify "🐛 Bug reported: <short description> (linked to task <original_N>)"
 ```
 
 **Output:**
