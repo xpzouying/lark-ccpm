@@ -58,9 +58,9 @@ if echo "$lark_status" | jq -e '.tokenStatus == "valid"' &> /dev/null; then
   lark_user=$(echo "$lark_status" | jq -r '.userName')
   echo "  ✅ Feishu authenticated as: $lark_user"
 else
-  echo "  ⚠️ Feishu not authenticated"
-  echo "  Running: lark-cli auth login"
-  lark-cli auth login
+  echo "  ❌ Feishu not authenticated"
+  echo "  Please run: lark-cli auth login"
+  exit 1
 fi
 
 # Check glab CLI
@@ -87,9 +87,9 @@ echo "🔐 Checking GitLab authentication..."
 if glab auth status 2>&1 | grep -q "Logged in"; then
   echo "  ✅ GitLab authenticated"
 else
-  echo "  ⚠️ GitLab not authenticated"
-  echo "  Running: glab auth login"
-  glab auth login
+  echo "  ❌ GitLab not authenticated"
+  echo "  Please run: glab auth login"
+  exit 1
 fi
 
 # Create directory structure
@@ -164,24 +164,47 @@ fi
 
 # If no existing config, prompt for setup
 if [ -z "$BASE_TOKEN" ]; then
-  echo "  Choose setup mode:"
-  echo "    1) Connect to an existing Feishu Base (已有多维表格)"
-  echo "    2) Create a new Feishu Base (自动创建)"
+  echo "  Paste your Feishu Base URL (or press Enter to create a new Base):"
+  echo "  Example: https://xxx.feishu.cn/base/AbcToken123?table=tblXXX"
   echo ""
-  read -r -p "  Enter choice [1/2]: " setup_choice
+  read -r -p "  > " base_input
   echo ""
 
-  if [ "$setup_choice" = "1" ]; then
-    # ── Connect to existing Base ──
-    read -r -p "  Enter Feishu Base App Token (从多维表格 URL 中获取): " BASE_TOKEN
-    echo ""
-    echo "  Fetching tables from base..."
-    tables_json=$(lark-cli base +table-list --base-token "$BASE_TOKEN" 2>&1)
-    if echo "$tables_json" | jq -e '.items' &> /dev/null; then
-      echo "  Available tables:"
-      echo "$tables_json" | jq -r '.items[] | "    \(.table_id) — \(.name)"'
+  if [ -n "$base_input" ]; then
+    # ── Parse URL ──
+    # Extract base_token from /base/<token>
+    BASE_TOKEN=$(echo "$base_input" | sed -n 's|.*/base/\([^?]*\).*|\1|p')
+    # Extract table_id from ?table=<id> if present
+    TABLE_ID=$(echo "$base_input" | sed -n 's|.*[?&]table=\([^&]*\).*|\1|p')
+
+    if [ -z "$BASE_TOKEN" ]; then
+      # Not a URL, treat as raw base token
+      BASE_TOKEN="$base_input"
+    fi
+
+    echo "  Parsed: base_token=$BASE_TOKEN"
+    [ -n "$TABLE_ID" ] && echo "  Parsed: table_id=$TABLE_ID"
+
+    # Verify base is accessible
+    if lark-cli base +table-list --base-token "$BASE_TOKEN" &> /dev/null; then
+      echo "  ✅ Feishu Base accessible"
+    else
+      echo "  ❌ Cannot access Feishu Base: $BASE_TOKEN"
+      echo "  Check the URL and try again."
+      exit 1
+    fi
+
+    # If no table_id from URL, list tables and let user choose
+    if [ -z "$TABLE_ID" ]; then
       echo ""
-      read -r -p "  Enter Table ID (or press Enter to create new table): " TABLE_ID
+      echo "  Fetching tables..."
+      tables_json=$(lark-cli base +table-list --base-token "$BASE_TOKEN" 2>&1)
+      if echo "$tables_json" | jq -e '.data.items' &> /dev/null; then
+        echo "  Available tables:"
+        echo "$tables_json" | jq -r '.data.items[] | "    \(.table_id) — \(.name)"'
+        echo ""
+        read -r -p "  Enter Table ID (or press Enter to create new table): " TABLE_ID
+      fi
     fi
   else
     # ── Create new Base ──
@@ -199,7 +222,6 @@ if [ -z "$BASE_TOKEN" ]; then
     if [ -z "$BASE_TOKEN" ]; then
       echo "  ❌ Failed to create Feishu Base"
       echo "  Output: $base_json"
-      echo "  Please create manually in Feishu and re-run with option 1."
       exit 1
     fi
     echo "  ✅ Base created: $BASE_TOKEN"
