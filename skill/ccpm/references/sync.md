@@ -18,12 +18,20 @@ if [ -z "$APP_TOKEN" ] || [ -z "$TABLE_ID" ]; then
   exit 1
 fi
 
-# Helper: send webhook notification (no-op if WEBHOOK_URL is empty)
+# Helper: send webhook notification via notify-feishu.sh (supports templates)
+# Script location: .claude/scripts/notify-feishu.sh
+NOTIFY_SCRIPT=".claude/scripts/notify-feishu.sh"
 notify() {
   [ -z "$WEBHOOK_URL" ] && return
-  curl -s -X POST "$WEBHOOK_URL" \
-    -H "Content-Type: application/json" \
-    -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$1\"}}"
+  if [ -x "$NOTIFY_SCRIPT" ] || [ -f "$NOTIFY_SCRIPT" ]; then
+    bash "$NOTIFY_SCRIPT" "$@"
+  else
+    # Fallback: simple curl (no template support)
+    local msg="$1"
+    curl -s -X POST "$WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$msg\"}}"
+  fi
 }
 ```
 
@@ -159,7 +167,7 @@ git worktree add ../epic-<name> -b epic/<name>
 
 **Step 7 — Notify (optional):**
 ```bash
-notify "📋 Epic synced: <name> — $task_count tasks created"
+notify --template epic-start --epic "<name>" --tasks-total "$task_count" --summary "已同步到飞书多维表格"
 ```
 
 **Output:**
@@ -218,7 +226,7 @@ lark-cli base +record-upsert \
 
 Notify (optional):
 ```bash
-notify "📊 Task update: <task_name> — ${completion_pct}% complete"
+notify --template task-start --task "<N>: <task_name>" --epic "<epic_name>" --progress "<done>/<total>"
 ```
 
 After posting: update `last_sync` in progress.md frontmatter, update `updated` in the task file.
@@ -256,7 +264,7 @@ lark-cli base +record-upsert \
 sed -i.bak "/^progress:/c\\progress: ${progress}%" .claude/epics/<name>/epic.md
 rm .claude/epics/<name>/epic.md.bak
 
-notify "✅ Task closed: <task_name> — Epic progress: ${progress}%"
+notify --template task-done --task "<N>: <task_name>" --epic "<epic_name>" --progress "<closed>/<total>" --lark-record "$RECORD_ID"
 ```
 
 ---
@@ -309,7 +317,7 @@ Update epic.md frontmatter: `status: completed`.
 
 Notify:
 ```bash
-notify "🎉 Epic merged: <name> — all tasks completed"
+notify --template epic-done --epic "<name>" --tasks-total "$total" --summary "全部完成，已合并到 master"
 ```
 
 Write MR URL back to epic frontmatter:
@@ -396,7 +404,8 @@ rm <bug_file>.bak
 
 **Step 5 — Notify (optional):**
 ```bash
-notify "🐛 Bug reported: <short description> (linked to task <original_N>)"
+notify "$(printf '🐛 Bug 报告 — %s\n关联任务: %s\nEpic: %s\n飞书记录: %s' \
+  "<short description>" "<original_N>" "<epic_name>" "$bug_record_id")"
 ```
 
 **Output:**
