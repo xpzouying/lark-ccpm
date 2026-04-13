@@ -109,6 +109,51 @@ sed '1,/^---$/d; 1,/^---$/d' <file> > /tmp/body.md
 
 ---
 
+## Notification Emoji Spec
+
+All feishu webhook notifications MUST use an emoji prefix to indicate message type. This ensures messages are scannable at a glance in group chats.
+
+| Emoji | Type | Used When |
+|-------|------|-----------|
+| 🚀 | Task/Epic start | A task or epic begins execution |
+| ✅ | Task/Epic done | A task completes or an MR is merged |
+| 📊 | Progress summary | Progress sync, standup reports |
+| ⚠️ | Warning / partial failure | Non-critical issues, partial failures |
+| 🚨 | Critical error | Blocking errors, pipeline failures |
+| 📄 | Document link | Linking to PRD, epic, or external doc |
+| 🐛 | Bug report | A bug is found and recorded |
+| 📋 | Epic init | An epic is created and synced to Lark Base |
+| 🚢 | MR merged | A task MR is merged to master |
+| 🎉 | Epic celebration | All tasks in an epic are done |
+
+### Template-to-Emoji Mapping
+
+The `notify-feishu.sh` script uses `--template` to select message format. Each template has a fixed emoji prefix:
+
+```
+epic-start   → 📋   "📋 Epic 启动 — ..."
+task-start   → 🚀   "🚀 Task 开始 — ..."
+task-done    → ✅   "✅ Task 完成 — ..."
+mr-merged    → 🚢   "🚢 Task 合并到 master — ..."
+epic-done    → 🎉   "🎉🎉🎉 <epic> 收官 — ..."
+bug-report   → 🐛   "🐛 Bug 报告 — ..."
+warning      → ⚠️   "⚠️ 警告 — ..."
+error        → 🚨   "🚨 错误 — ..."
+progress     → 📊   "📊 进展汇总 — ..."
+doc-link     → 📄   "📄 文档链接 — ..."
+```
+
+### Raw Message Emoji Rule
+
+When sending raw messages (without `--template`), manually prefix the message with the appropriate emoji:
+```bash
+notify "🚀 开始部署 v2.1.0"
+notify "⚠️ API 响应超时，已自动重试"
+notify "🚨 数据库连接失败，任务中断"
+```
+
+---
+
 ## Configuration File
 
 All Lark and GitLab settings are stored in `.claude/lark-ccpm.yml`:

@@ -230,6 +230,25 @@ notifications:
   webhook_url: <飞书群机器人 webhook URL，可选>
 ```
 
+### 飞书通知 Emoji 规范
+
+所有飞书 webhook 通知消息必须以 emoji 开头标记类型，方便在群聊中快速扫描：
+
+| Emoji | 类型 | 场景 |
+|-------|------|------|
+| 🚀 | 任务开始 | Task/Epic 开始执行 |
+| ✅ | 任务完成 | Task 完成或 MR 合入 |
+| 📊 | 进展汇总 | 进度同步、standup 报告 |
+| ⚠️ | 警告 | 非致命问题、部分失败 |
+| 🚨 | 严重错误 | 阻塞性错误、Pipeline 失败 |
+| 📄 | 文档链接 | 关联 PRD、Epic 或外部文档 |
+| 🐛 | Bug 报告 | 发现并记录 Bug |
+| 📋 | Epic 初始化 | Epic 创建并同步到飞书 |
+| 🚢 | MR 合并 | Task MR 合并到 master |
+| 🎉 | Epic 收官 | Epic 全部任务完成 |
+
+完整规范见 `skill/ccpm/references/conventions.md` 的 "Notification Emoji Spec" 章节。
+
 ---
 
 ## 飞书多维表格字段

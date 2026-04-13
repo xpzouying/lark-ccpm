@@ -20,6 +20,8 @@ fi
 
 # Helper: send webhook notification via notify-feishu.sh (supports templates)
 # Script location: .claude/scripts/notify-feishu.sh
+# Emoji spec: see conventions.md "Notification Emoji Spec" section.
+# Every message MUST start with a type emoji (🚀/✅/📊/⚠️/🚨/📄/🐛/📋/🚢/🎉).
 NOTIFY_SCRIPT=".claude/scripts/notify-feishu.sh"
 notify() {
   [ -z "$WEBHOOK_URL" ] && return
@@ -404,8 +406,7 @@ rm <bug_file>.bak
 
 **Step 5 — Notify (optional):**
 ```bash
-notify "$(printf '🐛 Bug 报告 — %s\n关联任务: %s\nEpic: %s\n飞书记录: %s' \
-  "<short description>" "<original_N>" "<epic_name>" "$bug_record_id")"
+notify --template bug-report --summary "<short description>" --task "<original_N>" --epic "<epic_name>" --lark-record "$bug_record_id"
 ```
 
 **Output:**
