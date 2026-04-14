@@ -16,8 +16,8 @@ This phase covers analyzing tasks for parallel work streams and launching agents
 
 Get task details:
 ```bash
-APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
-TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' lark-ccpm.yml | awk '{print $2}')
 RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<N>.md | awk '{print $2}')
 lark-cli base +record-get --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID"
 ```
@@ -90,8 +90,8 @@ parallelization_factor: <1.0-5.0>
 ### Preflight
 1. Verify task exists and is open by reading frontmatter `lark_record:` from the local task file, then:
    ```bash
-   APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
-   TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+   APP_TOKEN=$(grep 'base_token:' lark-ccpm.yml | awk '{print $2}')
+   TABLE_ID=$(grep 'table_id:' lark-ccpm.yml | awk '{print $2}')
    RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<N>.md | awk '{print $2}')
    lark-cli base +record-get --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID"
    ```
@@ -152,8 +152,8 @@ Streams with unmet dependencies are queued — launch them as their dependencies
 
 **Step 4 — Update status in Lark Base:**
 ```bash
-APP_TOKEN=$(grep 'app_token:' .claude/lark-ccpm.yml | awk '{print $2}')
-TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' lark-ccpm.yml | awk '{print $2}')
 RECORD_ID=$(grep 'lark_record:' .claude/epics/*/<N>.md | awk '{print $2}')
 lark-cli base +record-upsert --base-token "$APP_TOKEN" --table-id "$TABLE_ID" --record-id "$RECORD_ID" --json '{"状态":"In Progress"}'
 ```

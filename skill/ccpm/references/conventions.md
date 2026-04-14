@@ -7,8 +7,8 @@ Read this before doing any file operations across all phases.
 ## Directory Structure
 
 ```
+lark-ccpm.yml                      # Project config (Lark + GitLab settings)
 .claude/
-├── lark-ccpm.yml                  # Project config (Lark + GitLab settings)
 ├── prds/
 │   └── <feature-name>.md          # Product requirement documents
 ├── epics/
@@ -26,6 +26,8 @@ Read this before doing any file operations across all phases.
 │       └── <feature-name>/        # Completed epics
 └── context/                       # Project context docs (separate system)
 ```
+
+`lark-ccpm.yml` is always stored at project root.
 
 ---
 
@@ -51,8 +53,8 @@ updated: <ISO 8601>
 progress: 0%                # recalculated when tasks close
 prd: .claude/prds/<name>.md
 lark_record: <Record ID>    # 飞书多维表格 Record ID, set on sync
-lark_app: <App Token>       # 多维表格 App Token (also in .claude/lark-ccpm.yml)
-lark_table: <Table ID>      # 表 ID (also in .claude/lark-ccpm.yml)
+lark_app: <App Token>       # 多维表格 App Token (also in lark-ccpm.yml)
+lark_table: <Table ID>      # 表 ID (also in lark-ccpm.yml)
 gitlab_mr: <MR URL>         # GitLab Merge Request URL, set after MR creation
 ---
 ```
@@ -156,7 +158,7 @@ notify "🚨 数据库连接失败，任务中断"
 
 ## Configuration File
 
-All Lark and GitLab settings are stored in `.claude/lark-ccpm.yml`:
+Store Lark and GitLab settings in `lark-ccpm.yml`:
 
 ```yaml
 lark:
@@ -169,8 +171,8 @@ notifications:
 
 Read config values:
 ```bash
-APP_TOKEN=$(grep 'base_token:' .claude/lark-ccpm.yml | awk '{print $2}')  
-TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' lark-ccpm.yml | awk '{print $2}')
 ```
 
 ---

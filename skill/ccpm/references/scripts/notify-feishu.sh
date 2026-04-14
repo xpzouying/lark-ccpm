@@ -24,14 +24,14 @@ set -euo pipefail
 # 从项目配置或环境变量读取
 if [ -n "${FEISHU_WEBHOOK_URL:-}" ]; then
   WEBHOOK_URL="$FEISHU_WEBHOOK_URL"
-elif [ -f ".claude/lark-ccpm.yml" ]; then
-  WEBHOOK_URL=$(grep 'webhook_url:' .claude/lark-ccpm.yml | awk '{print $2}')
+elif [ -f "lark-ccpm.yml" ]; then
+  WEBHOOK_URL=$(grep 'webhook_url:' lark-ccpm.yml | awk '{print $2}')
 else
   WEBHOOK_URL=""
 fi
 
 if [ -z "$WEBHOOK_URL" ]; then
-  echo "⚠️ No webhook URL configured. Set FEISHU_WEBHOOK_URL or add to .claude/lark-ccpm.yml" >&2
+  echo "⚠️ No webhook URL configured. Set FEISHU_WEBHOOK_URL or add to lark-ccpm.yml" >&2
   exit 0
 fi
 

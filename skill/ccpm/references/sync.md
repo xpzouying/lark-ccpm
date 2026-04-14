@@ -9,12 +9,12 @@ This phase covers pushing local epics/tasks to Feishu Base (飞书多维表格) 
 **Always load config before any sync operation:**
 
 ```bash
-APP_TOKEN=$(grep 'base_token:' .claude/lark-ccpm.yml | awk '{print $2}')
-TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
-WEBHOOK_URL=$(grep 'webhook_url:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' lark-ccpm.yml | awk '{print $2}')
+WEBHOOK_URL=$(grep 'webhook_url:' lark-ccpm.yml | awk '{print $2}')
 
 if [ -z "$APP_TOKEN" ] || [ -z "$TABLE_ID" ]; then
-  echo "❌ Missing Lark config. Run init first to create .claude/lark-ccpm.yml"
+  echo "❌ Missing Lark config. Run init first to create lark-ccpm.yml"
   exit 1
 fi
 
@@ -61,7 +61,7 @@ fi
 ### Preflight
 - Verify `.claude/epics/<name>/epic.md` exists.
 - Verify numbered task files exist — if none: "❌ No tasks to sync. Decompose the epic first."
-- Load config: `APP_TOKEN`, `TABLE_ID` from `.claude/lark-ccpm.yml`.
+- Load config: `APP_TOKEN`, `TABLE_ID` from `lark-ccpm.yml`.
 
 ### Process
 

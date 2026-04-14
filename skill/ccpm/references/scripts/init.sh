@@ -11,14 +11,14 @@ echo "╚██████╗╚██████╗██║     ██║ �
 echo " ╚═════╝ ╚═════╝╚═╝     ╚═╝     ╚═╝"
 
 echo "┌─────────────────────────────────┐"
-echo "│ Claude Code Project Management  │"
+echo "│ CCPM Project Management         │"
 echo "│ Feishu Base + GitLab Edition    │"
 echo "└─────────────────────────────────┘"
 echo ""
 echo ""
 
-echo "🚀 Initializing Claude Code PM System"
-echo "======================================"
+echo "🚀 Initializing CCPM System (Claude + Codex)"
+echo "============================================="
 echo ""
 
 # Check for required tools
@@ -149,15 +149,17 @@ echo ""
 echo "📊 Setting up Feishu Base (多维表格)..."
 echo ""
 
+CONFIG_FILE="lark-ccpm.yml"
+
 # Check if config already exists
-if [ -f ".claude/lark-ccpm.yml" ]; then
-  echo "  ℹ️ Found existing .claude/lark-ccpm.yml"
-  existing_base=$(grep 'base_token:' .claude/lark-ccpm.yml | awk '{print $2}')
-  existing_table=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+if [ -f "$CONFIG_FILE" ]; then
+  echo "  ℹ️ Found existing $CONFIG_FILE"
+  existing_base=$(grep 'base_token:' "$CONFIG_FILE" | awk '{print $2}')
+  existing_table=$(grep 'table_id:' "$CONFIG_FILE" | awk '{print $2}')
   if [ -n "$existing_base" ] && [ -n "$existing_table" ]; then
     echo "  ✅ Using existing config: base=$existing_base table=$existing_table"
     echo ""
-    echo "  To reconfigure, delete .claude/lark-ccpm.yml and re-run init."
+    echo "  To reconfigure, delete $CONFIG_FILE and re-run init."
     BASE_TOKEN="$existing_base"
     TABLE_ID="$existing_table"
   fi
@@ -325,8 +327,8 @@ read -r -p "  Paste webhook URL (or press Enter to skip): " WEBHOOK_URL
 echo ""
 
 # ── Write Config File ───────────────────────────────────────────────
-echo "📝 Writing .claude/lark-ccpm.yml..."
-cat > .claude/lark-ccpm.yml <<CFGEOF
+echo "📝 Writing $CONFIG_FILE..."
+cat > "$CONFIG_FILE" <<CFGEOF
 lark:
   base_token: ${BASE_TOKEN}
   table_id: ${TABLE_ID}
@@ -334,7 +336,7 @@ lark:
 notifications:
   webhook_url: ${WEBHOOK_URL}
 CFGEOF
-echo "  ✅ Config saved to .claude/lark-ccpm.yml"
+echo "  ✅ Config saved to $CONFIG_FILE"
 
 # ── Connectivity Validation ─────────────────────────────────────────
 echo ""
@@ -381,6 +383,34 @@ EOF
   echo "  ✅ CLAUDE.md created"
 fi
 
+# Create AGENTS.md for Codex if it doesn't exist
+if [ ! -f "AGENTS.md" ]; then
+  echo ""
+  echo "📄 Creating AGENTS.md..."
+  cat > AGENTS.md << 'EOF'
+# AGENTS.md
+
+> Think carefully and implement the most concise solution that changes as little code as possible.
+
+## CCPM Data Layout
+
+CCPM project state is stored in `.claude/` for cross-agent compatibility:
+- Config: `lark-ccpm.yml` (project root)
+- PRDs: `.claude/prds/`
+- Epics/Tasks: `.claude/epics/`
+
+## Testing
+
+Always run tests before committing:
+- `npm test` or equivalent for your stack
+
+## Code Style
+
+Follow existing patterns in the codebase.
+EOF
+  echo "  ✅ AGENTS.md created"
+fi
+
 # Summary
 echo ""
 echo "✅ Initialization Complete!"
@@ -391,6 +421,7 @@ echo "  lark-cli: $(lark-cli --version 2>/dev/null || echo 'unknown')"
 echo "  glab: $(glab version 2>/dev/null | head -1 || echo 'unknown')"
 echo "  Feishu Base: $BASE_TOKEN"
 echo "  Table: $TABLE_ID"
+echo "  Config: $CONFIG_FILE"
 echo "  GitLab: $(git remote get-url origin 2>/dev/null || echo 'no remote')"
 echo ""
 echo "🎯 Next Steps (tell your agent):"
