@@ -7,8 +7,8 @@ Read this before doing any file operations across all phases.
 ## Directory Structure
 
 ```
+lark-ccpm.yml                      # Project config (Lark + GitLab settings)
 .claude/
-├── lark-ccpm.yml                  # Project config (Lark + GitLab settings)
 ├── prds/
 │   └── <feature-name>.md          # Product requirement documents
 ├── epics/
@@ -26,6 +26,8 @@ Read this before doing any file operations across all phases.
 │       └── <feature-name>/        # Completed epics
 └── context/                       # Project context docs (separate system)
 ```
+
+`lark-ccpm.yml` is always stored at project root.
 
 ---
 
@@ -51,8 +53,8 @@ updated: <ISO 8601>
 progress: 0%                # recalculated when tasks close
 prd: .claude/prds/<name>.md
 lark_record: <Record ID>    # 飞书多维表格 Record ID, set on sync
-lark_app: <App Token>       # 多维表格 App Token (also in .claude/lark-ccpm.yml)
-lark_table: <Table ID>      # 表 ID (also in .claude/lark-ccpm.yml)
+lark_app: <App Token>       # 多维表格 App Token (also in lark-ccpm.yml)
+lark_table: <Table ID>      # 表 ID (also in lark-ccpm.yml)
 gitlab_mr: <MR URL>         # GitLab Merge Request URL, set after MR creation
 ---
 ```
@@ -109,9 +111,54 @@ sed '1,/^---$/d; 1,/^---$/d' <file> > /tmp/body.md
 
 ---
 
+## Notification Emoji Spec
+
+All feishu webhook notifications MUST use an emoji prefix to indicate message type. This ensures messages are scannable at a glance in group chats.
+
+| Emoji | Type | Used When |
+|-------|------|-----------|
+| 🚀 | Task/Epic start | A task or epic begins execution |
+| ✅ | Task/Epic done | A task completes or an MR is merged |
+| 📊 | Progress summary | Progress sync, standup reports |
+| ⚠️ | Warning / partial failure | Non-critical issues, partial failures |
+| 🚨 | Critical error | Blocking errors, pipeline failures |
+| 📄 | Document link | Linking to PRD, epic, or external doc |
+| 🐛 | Bug report | A bug is found and recorded |
+| 📋 | Epic init | An epic is created and synced to Lark Base |
+| 🚢 | MR merged | A task MR is merged to master |
+| 🎉 | Epic celebration | All tasks in an epic are done |
+
+### Template-to-Emoji Mapping
+
+The `notify-feishu.sh` script uses `--template` to select message format. Each template has a fixed emoji prefix:
+
+```
+epic-start   → 📋   "📋 Epic 启动 — ..."
+task-start   → 🚀   "🚀 Task 开始 — ..."
+task-done    → ✅   "✅ Task 完成 — ..."
+mr-merged    → 🚢   "🚢 Task 合并到 master — ..."
+epic-done    → 🎉   "🎉🎉🎉 <epic> 收官 — ..."
+bug-report   → 🐛   "🐛 Bug 报告 — ..."
+warning      → ⚠️   "⚠️ 警告 — ..."
+error        → 🚨   "🚨 错误 — ..."
+progress     → 📊   "📊 进展汇总 — ..."
+doc-link     → 📄   "📄 文档链接 — ..."
+```
+
+### Raw Message Emoji Rule
+
+When sending raw messages (without `--template`), manually prefix the message with the appropriate emoji:
+```bash
+notify "🚀 开始部署 v2.1.0"
+notify "⚠️ API 响应超时，已自动重试"
+notify "🚨 数据库连接失败，任务中断"
+```
+
+---
+
 ## Configuration File
 
-All Lark and GitLab settings are stored in `.claude/lark-ccpm.yml`:
+Store Lark and GitLab settings in `lark-ccpm.yml`:
 
 ```yaml
 lark:
@@ -124,8 +171,8 @@ notifications:
 
 Read config values:
 ```bash
-APP_TOKEN=$(grep 'base_token:' .claude/lark-ccpm.yml | awk '{print $2}')  
-TABLE_ID=$(grep 'table_id:' .claude/lark-ccpm.yml | awk '{print $2}')
+APP_TOKEN=$(grep 'base_token:' lark-ccpm.yml | awk '{print $2}')
+TABLE_ID=$(grep 'table_id:' lark-ccpm.yml | awk '{print $2}')
 ```
 
 ---
